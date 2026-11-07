@@ -252,3 +252,231 @@ Pendiente:
 - Pruebas de Core.
 - Pruebas de integración.
 - Validación de la experiencia VR.
+
+# 14. INTEGRACIÓN DE LAS DOS MISIONES - V0.5
+
+## 14.1. Organización general
+
+El videojuego tendrá dos misiones consecutivas:
+
+Misión 1:
+Sustitución robótica del módulo energético.
+
+Misión 2:
+Reparación exterior del panel solar.
+
+MissionManager controla el orden de los objetivos.
+
+Los minijuegos funcionan de manera independiente
+y notifican a Core cuando terminan correctamente.
+
+## 14.2. Integración de la Misión 1
+
+Archivo de configuración previsto:
+Mission_Energy.asset
+
+Secuencia de acciones:
+
+1. EmergencyActivated
+2. EnergyModuleCollected
+3. EnergyModuleLoadedIntoHatch
+4. RoboticConsoleActivated
+5. EnergyModuleInstalled
+6. RepairConfirmed
+
+Responsabilidades:
+
+Luis:
+- Configurar los objetivos.
+- Validar las acciones recibidas.
+- Comprobar el cambio a la segunda misión.
+
+Santi:
+- Configurar los controles VR.
+- Implementar el modo de operación robótica.
+- Desactivar temporalmente la locomoción.
+- Mantener libre el movimiento de la cabeza.
+
+Yoshua:
+- Programar las interacciones del módulo.
+- Programar la compuerta.
+- Programar los brazos mecánicos.
+- Implementar el minijuego robótico.
+- Validar la finalización del minijuego.
+
+Diogo:
+- Preparar los modelos 3D.
+- Organizar el compartimiento de mantenimiento.
+- Preparar las zonas de interacción.
+
+Camila:
+- Mostrar instrucciones del Centro de Control.
+- Implementar interfaz de operación robótica.
+- Mostrar indicadores y mensajes de error.
+
+IMPORTANTE:
+
+EnergyModuleInstalled solo debe enviarse
+cuando el minijuego robótico termine correctamente.
+
+Los pasos internos del minijuego no deben
+modificar directamente MissionManager.
+
+## 14.3. Integración de la Misión 2
+
+Archivo de configuración previsto:
+Mission_SolarPanel.asset
+
+Secuencia de acciones:
+
+1. SuitEquipped
+2. SuitSystemsChecked
+3. EVAPreparationCompleted
+4. AirlockDepressurized
+5. MMUActivated
+6. SolarPanelReached
+7. SolarPanelRepaired
+8. ReturnedToAirlock
+9. AirlockRepressurized
+10. StationPowerVerified
+
+Responsabilidades:
+
+Luis:
+- Configurar los objetivos.
+- Validar el progreso de la misión.
+- Comprobar la finalización del videojuego.
+
+Santi:
+- Programar el movimiento del MMU.
+- Implementar desplazamiento y estabilización.
+- Mantener controles VR cómodos.
+
+Yoshua:
+- Programar las interacciones del traje.
+- Implementar mecanismos de la esclusa.
+- Programar el minijuego del panel solar.
+- Validar las condiciones de reparación.
+
+Diogo:
+- Preparar el escenario exterior.
+- Crear modelos del MMU y panel solar.
+- Preparar herramientas y puntos de anclaje.
+
+Camila:
+- Crear instrucciones EVA.
+- Mostrar indicadores del MMU.
+- Preparar interfaz del minijuego.
+- Mostrar confirmaciones y advertencias.
+
+IMPORTANTE:
+
+SolarPanelReached solo debe enviarse
+cuando el jugador llegue y esté estabilizado.
+
+SolarPanelRepaired solo debe enviarse
+al completar correctamente el minijuego.
+
+El diseño definitivo del minijuego exterior
+todavía está pendiente de confirmación.
+
+## 14.4. Contrato de los minijuegos con Core
+
+Cada minijuego debe:
+
+1. Comprobar que puede comenzar.
+2. Mantener sus pasos internos.
+3. Validar la finalización de cada etapa.
+4. Permitir corregir errores.
+5. Notificar a Core al finalizar.
+6. Restaurarse cuando se reinicie la misión.
+
+Para completar un objetivo se utilizará:
+
+MissionActionBridge.ExecuteAction()
+
+Cada puente tendrá configurada la acción
+correspondiente en el Inspector.
+
+No debe enviarse una acción al iniciar
+el minijuego, sino al completarlo correctamente.
+
+## 14.5. Eventos utilizados
+
+OnMissionStarted:
+Inicio de toda la secuencia del videojuego.
+
+OnMissionChanged:
+Comienza la primera misión o cambia de fase.
+
+OnObjectiveChanged:
+El objetivo activo cambia.
+
+OnMissionCompleted:
+Se completa la última misión configurada.
+
+OnMissionReset:
+Se solicita restaurar el estado de los sistemas.
+
+IMPORTANTE:
+
+OnMissionCompleted no se ejecuta al terminar
+la Misión 1 si existe una segunda misión.
+
+El cambio se notifica mediante OnMissionChanged.
+
+## 14.6. Reinicio y recuperación
+
+Cuando se ejecute ResetMission():
+
+- Core regresa a NotStarted.
+- Los índices se reinician.
+- Se actualiza la interfaz.
+- Se emite OnMissionReset.
+
+Cada sistema externo deberá restaurar
+sus propios objetos.
+
+Ejemplos:
+
+- Devolver el módulo energético.
+- Restaurar la compuerta.
+- Reiniciar el brazo mecánico.
+- Restaurar el panel solar.
+- Restablecer el estado del MMU.
+- Restaurar las pantallas de los minijuegos.
+
+MissionManager no realiza estas operaciones
+físicas directamente.
+
+## 14.7. Reglas para los desarrolladores
+
+- No modificar MissionManager sin coordinación.
+- No alterar directamente los índices de Core.
+- No enviar acciones antes de validar el objeto.
+- No completar objetivos desde objetos incorrectos.
+- No duplicar MissionManager en la escena.
+- No bloquear la rotación natural del visor VR.
+- Mantener los minijuegos separados de Core.
+- Probar cada sistema de manera independiente.
+- Documentar los eventos utilizados.
+
+## 14.8. Estado de implementación
+
+Core:
+Código preparado, pendiente de compilación
+y pruebas en Unity.
+
+Misión 1:
+Objetivos definidos.
+ScriptableObject pendiente de configurar.
+Minijuego robótico pendiente de desarrollar.
+
+Misión 2:
+Objetivos definidos.
+ScriptableObject pendiente de configurar.
+Minijuego exterior pendiente de decisión final.
+
+Integración:
+Pendiente de resolver los errores de Unity
+y conectar los componentes del equipo.

@@ -1,115 +1,140 @@
-# MISIÓN 01 - EMERGENCIA ENERGÉTICA
+# MISIÓN 01 - SUSTITUCIÓN DEL MÓDULO ENERGÉTICO
 
-## Identificación
+## 1. Identificación
 
 MissionId: mission_energy
-MissionName: Emergencia energética
+MissionName: Contingencia energética
 
-## Descripción
+## 2. Descripción
 
-El astronauta despierta dentro de la estación
-espacial cuando comienza a sonar una alarma.
+El astronauta despierta debido a una alarma
+de emergencia en la estación espacial.
 
-El sistema informa que se ha detectado una falla
-en el suministro energético.
+El Centro de Control informa de una falla
+en el sistema de distribución eléctrica.
 
-El jugador debe seguir un protocolo de emergencia
-para restablecer la energía y estabilizar
-temporalmente los sistemas de la estación.
+El jugador deberá localizar un módulo de
+reemplazo y utilizar un brazo robótico para
+sustituir el componente averiado.
 
-## Secuencia de objetivos
+## 3. Objetivos de Core
 
 ### Objetivo 1
-
 ObjectiveId: energy_01
-
-Description:
-Activar el protocolo de emergencia
-desde la consola principal.
-
-RequiredAction:
-EmergencyActivated
+Description: Activar el protocolo de emergencia.
+RequiredAction: EmergencyActivated
 
 ### Objetivo 2
-
 ObjectiveId: energy_02
-
-Description:
-Localizar y recoger el módulo energético
-de reemplazo.
-
-RequiredAction:
-EnergyModuleCollected
+Description: Localizar y recoger el módulo energético.
+RequiredAction: EnergyModuleCollected
 
 ### Objetivo 3
-
 ObjectiveId: energy_03
-
-Description:
-Instalar el módulo energético en el
-sistema de ingeniería.
-
-RequiredAction:
-EnergyModuleInstalled
+Description: Introducir el repuesto en la compuerta.
+RequiredAction: EnergyModuleLoadedIntoHatch
 
 ### Objetivo 4
-
 ObjectiveId: energy_04
+Description: Activar la consola de control robótico.
+RequiredAction: RoboticConsoleActivated
 
-Description:
-Verificar el suministro energético y
-confirmar la reparación en la consola.
+### Objetivo 5
+ObjectiveId: energy_05
+Description: Sustituir el módulo usando el brazo robótico.
+RequiredAction: EnergyModuleInstalled
 
-RequiredAction:
-RepairConfirmed
+### Objetivo 6
+ObjectiveId: energy_06
+Description: Verificar y confirmar la reparación.
+RequiredAction: RepairConfirmed
 
-## Condición de finalización
+## 4. Minijuego de sustitución robótica
 
-La misión termina cuando los cuatro objetivos
-son completados en el orden establecido.
+El minijuego comienza después de activar
+la consola robótica.
 
-Si existen otras misiones configuradas,
-MissionManager inicia automáticamente
-la siguiente misión.
+Secuencia interna:
 
-Si es la última misión configurada,
-se completa la secuencia del videojuego.
+1. Identificar el módulo defectuoso.
+2. Posicionar el brazo robótico.
+3. Sujetar y retirar el módulo averiado.
+4. Depositarlo en una zona segura.
+5. Recoger el módulo de reemplazo.
+6. Introducirlo en su alojamiento.
+7. Asegurar la instalación.
+8. Ejecutar la comprobación de instalación.
 
-## Integración con el equipo
+Estas etapas son internas del minijuego.
+
+Solo cuando se completen correctamente
+se enviará a Core la acción:
+
+EnergyModuleInstalled
+
+Si un paso falla, el minijuego deberá permitir
+corregirlo sin avanzar el objetivo de Core.
+
+## 5. Responsabilidades
 
 Luis:
-Gestiona la secuencia mediante MissionManager.
+- Definir los objetivos.
+- Configurar MissionDefinition.
+- Validar la integración con MissionManager.
 
 Santi:
-Implementa el desplazamiento y los controles VR.
+- Configurar controles VR.
+- Implementar el modo de operación de consola.
+- Mantener el seguimiento natural de la cabeza.
 
 Yoshua:
-Conecta los objetos interactivos mediante
-MissionActionBridge y sus acciones.
+- Programar la compuerta interactiva.
+- Programar el brazo y su sistema de agarre.
+- Implementar la secuencia del minijuego.
+- Notificar su finalización a Core.
 
 Diogo:
-Prepara las zonas de mando, laboratorio
-e ingeniería dentro del escenario 3D.
+- Preparar módulo, compuerta y brazo 3D.
+- Organizar la zona de mantenimiento.
+- Configurar elementos visuales y colisiones.
 
 Camila:
-Muestra las instrucciones utilizando
-CurrentObjective y OnObjectiveChanged.
+- Diseñar interfaz de operación robótica.
+- Mostrar objetivos y pasos del minijuego.
+- Preparar instrucciones del Centro de Control.
+- Mostrar errores y confirmaciones.
 
-## Configuración pendiente en Unity
+## 6. Integración con Core
 
-Crear el ScriptableObject:
+MissionManager valida los seis objetivos
+según su orden.
 
-Game/Data/Missions/Mission_Energy.asset
+MissionActionBridge comunica las acciones.
 
-Asignar:
-- MissionId: mission_energy
-- MissionName: Emergencia energética
-- Objectives: 4 elementos
+El minijuego mantiene sus estados internos
+separados de MissionManager.
 
-Configurar cada objetivo respetando
-exactamente el orden indicado.
+El minijuego no debe enviar
+EnergyModuleInstalled hasta terminar
+todas las comprobaciones.
 
-Agregar Mission_Energy.asset a la lista
-de misiones de MissionManager.
+Las acciones solo deben enviarse después
+de validar la interacción correspondiente.
 
-Estado: pendiente de configuración y pruebas.
+## 7. Finalización
+
+Tras confirmar la reparación, la misión termina.
+
+Si existe una siguiente misión configurada,
+Core avanzará automáticamente.
+
+La siguiente misión prevista es la
+reparación exterior del panel solar.
+
+## 8. Estado actual
+
+Diseño de misión: definido.
+Acciones Core: declaradas.
+Configuración Mission_Energy.asset: pendiente.
+Minijuego robótico: pendiente de implementación.
+Pruebas de integración: pendientes.
