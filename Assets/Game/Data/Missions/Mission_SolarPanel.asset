@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ea5e69f8a210514c9a0bb472bb19ded, type: 3}
+  m_Name: Mission_SolarPanel
+  m_EditorClassIdentifier: Assembly-CSharp::MissionDefinition
+  missionId: mission_solar
+  missionName: "Reparaci\xF3n exterior del panel solar"
+  description: "Realizar una actividad extravehicular para repara el panel solar da\xF1ado y restablecer la generaci\xF3n de energ\xEDa de la estaci\xF3n."
+  objectives:
+  - objectiveId: solar_01
+    description: Equiparse con el traje especial.
+    requiredAction: 4
+  - objectiveId: solar_02
+    description: Verificar los sistemas del traje.
+    requiredAction: 5
+  - objectiveId: solar_03
+    description: "Completar la preparaci\xF3n para la salida EVA."
+    requiredAction: 6
+  - objectiveId: solar_04
+    description: Despresurizar la esclusa.
+    requiredAction: 7
+  - objectiveId: solar_05
+    description: "Activar la unidad de propulsi\xF3n personal."
+    requiredAction: 14
+  - objectiveId: solar_06
+    description: Llegar y estabilizarse junto al panel solar.
+    requiredAction: 15
+  - objectiveId: solar_07
+    description: "Reparar el panel solar da\xF1ado."
+    requiredAction: 9
+  - objectiveId: solar_08
+    description: "Regresar a la esclusa de la estaci\xF3n."
+    requiredAction: 10
+  - objectiveId: solar_09
+    description: "Completar la represurizaci\xF3n de la esclusa."
+    requiredAction: 11
+  - objectiveId: solar_10
+    description: "Confirmar la estabilizaci\xF3n energ\xE9tica."
+    requiredAction: 16
