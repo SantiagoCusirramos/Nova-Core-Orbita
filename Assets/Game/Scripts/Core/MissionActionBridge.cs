@@ -2,54 +2,98 @@ using UnityEngine;
 
 public class MissionActionBridge : MonoBehaviour
 {
-    [Header("Sistema de misiones")]
-    [SerializeField]
-    private MissionManager missionManager;
+    [Header("Configuracion Core")]
+    [SerializeField] private MissionManager missionManager;
 
-    [Header("Accion que representa este objeto")]
-    [SerializeField]
-    private MissionAction action;
+    [Header("Accion que ejecuta este objeto")]
+    [SerializeField] private MissionAction action;
 
-    // Se ejecuta cuando el jugador interactua
-    public void ExecuteAction()
+    // Obtener MissionManager
+    private MissionManager GetMissionManager()
     {
-        if (missionManager == null)
+        if (missionManager != null)
         {
-            Debug.LogError(
-                "No se ha asignado el MissionManager."
-            );
-            return;
+            return missionManager;
         }
 
-        bool success = missionManager.TryCompleteAction(action);
+        return MissionManager.Instance;
+    }
 
-        if (success)
+    // Para eventos del Inspector de Unity
+    public void ExecuteAction()
+    {
+        TryExecuteAction();
+    }
+
+    // Para los scripts de los minijuegos
+    public bool TryExecuteAction()
+    {
+        MissionManager manager = GetMissionManager();
+
+        if (manager == null)
         {
-            Debug.Log("Accion completada: " + action);
+            Debug.LogWarning(
+                "No se encontro MissionManager.",
+                this
+            );
+
+            return false;
+        }
+
+        bool accepted = manager.TryCompleteAction(action);
+
+        if (accepted)
+        {
+            Debug.Log(
+                "Accion aceptada: " + action,
+                this
+            );
         }
         else
         {
             Debug.LogWarning(
-                "La accion no corresponde al objetivo actual."
+                "Accion rechazada: " + action +
+                ". No corresponde al objetivo actual.",
+                this
             );
         }
+
+        return accepted;
     }
 
-    // Iniciar la mision
+    // Iniciar la secuencia de misiones
     public void BeginMission()
     {
-        if (missionManager != null)
+        MissionManager manager = GetMissionManager();
+
+        if (manager == null)
         {
-            missionManager.StartMission();
+            Debug.LogWarning(
+                "No se puede iniciar: MissionManager no existe.",
+                this
+            );
+
+            return;
         }
+
+        manager.StartMission();
     }
 
-    // Reiniciar la mision
+    // Reiniciar la secuencia
     public void RestartMission()
     {
-        if (missionManager != null)
+        MissionManager manager = GetMissionManager();
+
+        if (manager == null)
         {
-            missionManager.ResetMission();
+            Debug.LogWarning(
+                "No se puede reiniciar: MissionManager no existe.",
+                this
+            );
+
+            return;
         }
+
+        manager.ResetMission();
     }
 }
