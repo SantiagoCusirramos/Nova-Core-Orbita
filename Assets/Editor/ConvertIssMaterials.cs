@@ -11,6 +11,9 @@ public static class ConvertIssMaterials
     private const string MatFolder = "Assets/NovaCore/Art/ISS/Materials";
     private const string ScenePath = "Assets/NovaCore/Scenes/01_Orbit.unity";
 
+    [UnityEditor.MenuItem("Nova Core/Convert ISS Materials (URP)")]
+    public static void RunFromMenu() { Run(); }
+
     public static string Run()
     {
         var scene = EditorSceneManager.GetActiveScene();
