@@ -26,7 +26,7 @@ namespace NovaCore.Editor
         const string SKY_TEX_B = "Assets/NovaCore/Art/Skybox/deep_space_combined_2k.png";
         const string SKY_TEX_C = "Assets/NovaCore/Art/Skybox/deep_space_combined_4k.png";
 
-        [MenuItem("Nova Core/Setup 01_Orbit (Espacio + ISS + Player)")]
+        [MenuItem("Nova Core/Legacy/Setup 01_Orbit (antiguo - usar BUILD 01_Orbit)")]
         public static void Run()
         {
             Scene scene = SceneManager.GetActiveScene();
@@ -87,15 +87,10 @@ namespace NovaCore.Editor
             var freeFly = playerGO.AddComponent<OrbitFreeFly>();
             freeFly.moveSpeed = 25f;
 
-            // Movimiento VR (TrackedPoseDriver en cámara hija)
-            playerGO.AddComponent<VRMovement>();
-
-            // Rig XR runtime (mandos, floor tracking)
+            // Rig XR runtime (mandos, floor tracking).
+            // Decisión cerrada (HANDOFF §7): sin VRMovement ni PlayerModeSwitcher en el Player.
             playerGO.AddComponent<XRPlayerRig>();
-
-            // Switcher espectador / interactivo
-            var switcher = playerGO.AddComponent<PlayerModeSwitcher>();
-            switcher.initialMode = PlayerModeSwitcher.PlayerMode.Spectator;
+            playerGO.AddComponent<NovaInteractionRig>();
 
             // Cámara hija
             var camGO = new GameObject("Main Camera");

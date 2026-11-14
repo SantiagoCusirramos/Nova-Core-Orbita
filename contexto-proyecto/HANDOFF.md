@@ -125,7 +125,10 @@ contexto-proyecto/                            ← DENTRO del repo: documentació
 ├─ README.md                                 ← índice + fase actual
 ├─ HANDOFF.md                                ← este archivo
 ├─ ESTADO_ACTUAL_Y_TAREAS.md                 ← estado y tareas
-└─ contexto_nova_core_orbita_vr.md           ← visión e historial
+├─ contexto_nova_core_orbita_vr.md           ← visión e historial
+├─ TAREAS_PENDIENTES.md                      ← backlog único consolidado
+├─ REFERENCIA_NASA_SPACE_APPS.md             ← qué portar del otro proyecto (con rutas)
+└─ PLAN_INTERIORES_MISIONES.md               ← misiones ligeras + módulos ISS emulados
 
 ../Recursos/                                  ← FUERA del repo: solo fuentes originales
 ├─ deep-space-skybox-1.0.zip                 ← ZIP original del skybox
@@ -145,6 +148,7 @@ contexto-proyecto/                            ← DENTRO del repo: documentació
    (loader activo en PC/Android, perfiles Oculus Touch, `Project Validation`).
 
 Después: decidir interacción (XRI vs. interactores propios) y asignar modelos de mando.
+Lista completa y priorizada: **`TAREAS_PENDIENTES.md`** (IDs `VR-01`, `VR-02`, `VR-03`, `DEC-01`…).
 
 ---
 
@@ -167,5 +171,23 @@ Después: decidir interacción (XRI vs. interactores propios) y asignar modelos 
 - ¿Se compra un modelo de ISS más completo? → ver checklist §9 de
   `ESTADO_ACTUAL_Y_TAREAS.md` antes de reemplazarlo.
 - ¿Interacción con piezas de la estación? Requiere decidir el sistema (§3.4 del estado).
-- ¿Se recupera `MissionVR` con la ISS oficial o se descarta?
-- ¿Interiores? Requiere modelado aparte (el GLB actual es solo exterior).
+- **¿Herramientas EVA de `NASA-SPACE-APPS`?** Sus herramientas (`SpaceToolInteractable`) dependen de
+  **XRI 3.3.2**, que Nova no tiene. Opción A: usar sólo los modelos y un "holder" propio sobre
+  `InputDevices` (ligero, coherente con la decisión de §7). Opción B: instalar XRI y rehacer el rig.
+  **Por defecto, Opción A.** Detalle en `REFERENCIA_NASA_SPACE_APPS.md` §2.3.
+- ¿Se recupera `MissionVR` con la ISS oficial o se descarta? (El plan de interiores propone una
+  escena `02_Interior` nueva o reconstruir `MissionVR`; ver `PLAN_INTERIORES_MISIONES.md` §A.7.)
+- ¿Interiores? El GLB actual es sólo exterior; el plan de **módulos ISS emulados** está en
+  `PLAN_INTERIORES_MISIONES.md` §B.
+
+> Toda decisión que se cierre aquí debe moverse a §7 y reflejarse en `TAREAS_PENDIENTES.md`.
+
+---
+
+## Actualización sesión 5 (2026-11-14)
+
+- Nueva escena de interior: ejecutar `Nova Core → BUILD 02_Interior — Interior ISS + Misiones` (idempotente). Abrir `Assets/Game/Scenes/02_Interior.unity` y Play. Pulsar INICIAR (panel verde del Nodo).
+- Antes del primer build: `Nova Core → Configurar proyecto (Quest 2 + Build Settings)` y revisar Project Validation.
+- Decisión mantenida: **sin XRI**. La interacción es propia (`NovaInteractor`): gatillo = usar, grip = agarrar.
+- En `02_Interior` el Player SÍ lleva `CharacterController` (colisiones), pero sigue sin `VRMovement` ni `SpaceStationPlayerController`: `OrbitFreeFly` hace todo.
+- Detalle completo: `ESTADO_ACTUAL_Y_TAREAS.md` → "Sesión 5".

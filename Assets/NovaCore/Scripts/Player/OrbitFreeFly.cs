@@ -6,23 +6,27 @@ using XRCommonUsages = UnityEngine.XR.CommonUsages;
 namespace NovaCore
 {
     /// <summary>
-    /// Movimiento libre estilo "modo creativo" — sin gravedad, sin colisiones.
-    /// Funciona en desktop (teclado + ratón) y en VR (thumbsticks Meta Quest).
+    /// Movimiento libre estilo "gravedad cero". Funciona en escritorio (teclado + ratón)
+    /// y en VR (thumbsticks Meta Quest).
     ///
-    /// Desktop:
+    /// Colisiones: si el Player tiene un CharacterController habilitado, el movimiento usa
+    /// CharacterController.Move (no atraviesa paredes: interiores de la ISS). Si no lo tiene
+    /// (escena 01_Orbit), se mueve libremente como antes.
+    ///
+    /// Escritorio:
     ///   W/S  o flechas ↑↓     → avanzar / retroceder
     ///   A/D  o flechas ←→     → desplazarse lateral
     ///   E / Q                  → subir / bajar
-    ///   Click derecho + ratón  → rotar cámara
-    ///   Shift                  → turbo (3×)
+    ///   Cursor bloqueado o click derecho + ratón → mirar
+    ///   Shift                  → turbo
     ///   Scroll                 → ajustar velocidad base
     ///   ESC                    → soltar / bloquear cursor
     ///
     /// VR (Meta Quest 2):
-    ///   Thumbstick izquierdo   → avanzar / retroceder / lateral
-    ///   Thumbstick derecho X   → snap turn ±45°
-    ///   Thumbstick derecho Y   → subir / bajar
-    ///   Gatillo izquierdo      → turbo
+    ///   Stick izquierdo        → avanzar / retroceder / lateral (hacia donde miras)
+    ///   Stick derecho X        → snap turn ±45° (gira alrededor de la cabeza)
+    ///   Stick derecho Y        → subir / bajar
+    ///   Click stick izquierdo  → turbo (los gatillos quedan libres para interactuar)
     /// </summary>
     public class OrbitFreeFly : MonoBehaviour
     {
@@ -30,7 +34,7 @@ namespace NovaCore
         [Tooltip("Velocidad base en unidades/segundo (1 unidad = 1 metro)")]
         public float moveSpeed = 25f;
 
-        [Tooltip("Multiplicador Shift / gatillo izquierdo VR")]
+        [Tooltip("Multiplicador Shift / click del stick izquierdo en VR")]
         public float sprintMultiplier = 4f;
 
         [Tooltip("Límite mínimo y máximo de velocidad via scroll")]
@@ -49,6 +53,14 @@ namespace NovaCore
         [Tooltip("Ángulo de snap turn en VR")]
         public float snapTurnAngle = 45f;
 
+        [Tooltip("Zona muerta del eje vertical del stick derecho (evita subir/bajar al hacer snap turn)")]
+        [Range(0f, 0.9f)]
+        public float verticalDeadZone = 0.35f;
+
+        [Header("Colisiones (solo si hay CharacterController)")]
+        [Tooltip("Mueve la cápsula del CharacterController a la posición de la cabeza cada frame")]
+        public bool syncColliderToHead = true;
+
         [Header("Referencias")]
         [Tooltip("Cámara que rota en pitch. Si está vacío usa Camera.main.")]
         public Camera playerCamera;
@@ -57,6 +69,7 @@ namespace NovaCore
         private float _yaw;
         private float _pitch;
         private Vector3 _velocity;
+        private CharacterController _cc;
 
         // VR snap turn
         private bool _snapTurnReady = true;
@@ -66,6 +79,8 @@ namespace NovaCore
         {
             if (playerCamera == null)
                 playerCamera = Camera.main;
+
+            _cc = GetComponent<CharacterController>();
 
             // Inicializar ángulos desde la rotación actual para no tener salto brusco
             _yaw   = transform.eulerAngles.y;
@@ -82,7 +97,9 @@ namespace NovaCore
 
         private void Update()
         {
-            if (IsVR())
+            if (playerCamera == null) playerCamera = Camera.main;
+
+            if (NovaXR.IsActive)
             {
                 HandleVRRotation();
                 HandleVRMovement();
@@ -95,6 +112,9 @@ namespace NovaCore
                 HandleScrollSpeed();
             }
         }
+
+        /// <summary>Detiene la inercia (útil tras un teletransporte).</summary>
+        public void StopMotion() => _velocity = Vector3.zero;
 
         // ════════════════════════════════════════════════════════════════════
         // DESKTOP
@@ -175,17 +195,14 @@ namespace NovaCore
 
         private void HandleVRRotation()
         {
-            var rightHand = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
-            if (!rightHand.isValid) return;
-
-            if (!rightHand.TryGetFeatureValue(XRCommonUsages.primary2DAxis, out Vector2 stick)) return;
+            Vector2 stick = NovaXR.Stick(XRNode.RightHand);
 
             // Snap turn horizontal
             if (Mathf.Abs(stick.x) > 0.5f)
             {
                 if (_snapTurnReady)
                 {
-                    transform.Rotate(Vector3.up, Mathf.Sign(stick.x) * snapTurnAngle);
+                    SnapTurn(Mathf.Sign(stick.x) * snapTurnAngle);
                     _snapTurnReady = false;
                 }
             }
@@ -195,30 +212,34 @@ namespace NovaCore
             }
         }
 
+        /// <summary>
+        /// Gira el rig alrededor de la cabeza (no del centro del guardián), para que el
+        /// usuario gire sobre sí mismo aunque se haya movido dentro de su espacio físico.
+        /// </summary>
+        private void SnapTurn(float degrees)
+        {
+            Vector3 pivot = playerCamera != null ? playerCamera.transform.position : transform.position;
+            transform.RotateAround(pivot, Vector3.up, degrees);
+
+            // Con CharacterController hay que sincronizar o el siguiente Move usa la pose vieja
+            if (_cc != null && _cc.enabled) Physics.SyncTransforms();
+        }
+
         private void HandleVRMovement()
         {
-            var leftHand  = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
-            var rightHand = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
+            Vector2 leftStick  = NovaXR.Stick(XRNode.LeftHand);
+            Vector2 rightStick = NovaXR.Stick(XRNode.RightHand);
 
-            float h = 0f, v = 0f, up = 0f;
-            bool sprint = false;
+            float h = leftStick.x;
+            float v = leftStick.y;
 
-            // Thumbstick izquierdo → movimiento horizontal/vertical
-            if (leftHand.isValid && leftHand.TryGetFeatureValue(XRCommonUsages.primary2DAxis, out Vector2 leftStick))
-            {
-                h = leftStick.x;
-                v = leftStick.y;
-            }
-
-            // Thumbstick derecho Y → subir/bajar
-            if (rightHand.isValid && rightHand.TryGetFeatureValue(XRCommonUsages.primary2DAxis, out Vector2 rightStick))
-            {
+            // Stick derecho Y → subir/bajar, solo si el gesto es claramente vertical
+            float up = 0f;
+            if (Mathf.Abs(rightStick.y) > verticalDeadZone && Mathf.Abs(rightStick.y) > Mathf.Abs(rightStick.x))
                 up = rightStick.y;
-            }
 
-            // Gatillo izquierdo → turbo
-            if (leftHand.isValid && leftHand.TryGetFeatureValue(XRCommonUsages.trigger, out float trigger))
-                sprint = trigger > 0.5f;
+            // Click del stick izquierdo → turbo (gatillos libres para interactuar)
+            bool sprint = NovaXR.Button(XRNode.LeftHand, XRCommonUsages.primary2DAxisClick);
 
             ApplyMovement(h, v, up, sprint);
         }
@@ -238,7 +259,7 @@ namespace NovaCore
                           + Vector3.up  * up;   // subir/bajar siempre en world-up
 
             Vector3 target = wish.magnitude > 0.001f
-                ? wish.normalized * speed
+                ? Vector3.ClampMagnitude(wish, 1f) * speed
                 : Vector3.zero;
 
             // Suavizado con Lerp
@@ -246,13 +267,24 @@ namespace NovaCore
                 ? Vector3.Lerp(_velocity, target, Time.deltaTime * smoothing)
                 : target;
 
-            transform.position += _velocity * Time.deltaTime;
+            Vector3 delta = _velocity * Time.deltaTime;
+
+            if (_cc != null && _cc.enabled)
+            {
+                if (syncColliderToHead && playerCamera != null)
+                    _cc.center = transform.InverseTransformPoint(playerCamera.transform.position);
+
+                Vector3 before = transform.position;
+                _cc.Move(delta);
+
+                // Si chocamos, la inercia no sigue empujando contra la pared
+                if (Time.deltaTime > 0f)
+                    _velocity = (transform.position - before) / Time.deltaTime;
+            }
+            else
+            {
+                transform.position += delta;
+            }
         }
-
-        // ════════════════════════════════════════════════════════════════════
-        // UTIL
-        // ════════════════════════════════════════════════════════════════════
-
-        private static bool IsVR() => UnityEngine.XR.XRSettings.isDeviceActive;
     }
 }

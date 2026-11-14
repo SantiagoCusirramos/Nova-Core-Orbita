@@ -305,6 +305,11 @@ solo cuando el reemplazo esté verificado, para no romper referencias.
 
 ## 10. Tareas pendientes priorizadas
 
+> ⚠️ **Esta lista ya no es la fuente viva.** El backlog consolidado y con IDs/criterios de
+> aceptación está en **`contexto-proyecto/TAREAS_PENDIENTES.md`** (incluye estas tareas más las de
+> portar `NASA-SPACE-APPS` y el plan de interiores/misiones). Se conserva aquí sólo por contexto
+> histórico. Al añadir o cerrar tareas, hacerlo en `TAREAS_PENDIENTES.md`.
+
 ### 🔴 Bloqueante para VR
 - [ ] **Primer build Android / Quest Link** y confirmar HMD + mandos reales (ver §3.5).
 - [ ] Asignar modelos visuales de mando en `XRPlayerRig` (o crear manos simples).
@@ -408,3 +413,32 @@ Trucos y trampas ya encontradas:
 ---
 
 *Documento reescrito el 2026-11-10 tras verificar el estado real en el Editor.*
+
+---
+
+## Sesión 5 (2026-11-14) — Migración NASA-SPACE-APPS + interiores ISS + interacción sin XRI
+
+**Correcciones de la revisión**
+- `BuildOrbitScene` / `SetupSpaceEnvironment`: ya NO añaden `VRMovement` ni `PlayerModeSwitcher` (decisión §7). El segundo menú pasa a `Nova Core/Legacy/…`.
+- `OrbitFreeFly`: snap turn alrededor de la cabeza, colisiones opcionales con `CharacterController` (interiores), turbo VR = click del stick izquierdo (gatillos libres para interactuar), zona muerta vertical.
+- Criterio único de VR: `NovaXR.IsActive` (lo usan `OrbitFreeFly`, `XRPlayerRig` e interacción).
+- `XRPlayerRig`: expone `LeftHand/RightHand/CameraOffset/IsBuilt` y el evento `RigBuilt`.
+- `PlayerModeSwitcher`: el botón menú del mando solo alterna en el flanco (antes alternaba cada frame).
+- `MissionManager`: nuevo evento `OnActionCompleted`, propiedad `Missions`; `ResetMission` emite `OnMissionChanged(null)`. API anterior intacta.
+- Errata en `Mission_SolarPanel.asset` ("repara" → "reparar").
+
+**Migrado de NASA-SPACE-APPS (sin XRI ni TMP)**
+- `SpaceRepairStation` (4 minijuegos) → `Assets/Game/Scripts/Interaction/` + enlace opcional al Core (`linkToMission`).
+- `SpaceToolInteractable` → `SpaceTool` (PGT, martillo, carraca, pistola de sellador) sobre interactores propios.
+- `StationDoor` → `HatchDoor` (proximidad / forzada por misión), `StationMeshBuilder`, `StationTransitPod`.
+- Modelos GLB de herramientas y texturas de interior/Tierra/paneles → `Assets/Game/Art/`.
+
+**Nuevo**
+- Interacción sin XRI: `NovaInteractor` (láser por mando / mira de escritorio), `NovaInteractable`, `NovaInteractionRig`.
+- Gameplay de misiones: `MissionGate`, `MissionButton`, `MissionPickup`, `MissionDropZone`, `MissionZone`, `MissionReaction`, `RoboticArmConsole`, `MissionHUD`, `AlarmLights`, `MissionResetSpawn`, `SceneTeleporter`.
+- Menú `Nova Core/BUILD 02_Interior — Interior ISS + Misiones`: genera `Assets/Game/Scenes/02_Interior.unity` (Nodo, Destiny, Zvezda, Quest, Cúpula decorados + exterior EVA + bahía robótica) con los 16 objetivos cableados, y añade la consola "Entrar a la ISS" en `01_Orbit`.
+- Menú `Nova Core/Configurar proyecto (Quest 2 + Build Settings)`: escenas en Build Settings, nombre/ID Android, API mínima 32, HDR móvil off.
+
+**Verificación**: todo el código compila (verificado fuera de Unity con las DLL de Unity 6000.6.7f1). Pendiente: compilar en el Editor, ejecutar los dos menús, probar en Play y luego en el visor.
+
+**Controles** — Escritorio: WASD/E/Q mover, ratón mirar, click izq. usar, F agarrar/soltar. VR: stick izq. mover, stick der. girar/subir, gatillo usar, grip agarrar.

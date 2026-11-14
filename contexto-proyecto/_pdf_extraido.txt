@@ -1,0 +1,813 @@
+
+===== PAGE 1 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+DOCUMENTACIÓN DEL PROYECTO E INTEGRACIÓN
+Simulador de misión espacial inmersiva en VR
+Contingencia energética: reparación robótica y EVA
+Proyecto NASA Space Apps – juego educativo inmersivo en Unity y VR.
+Equipo Luis, Santi, Yoshua, Diogo y Camila.
+Documento Versión 1.1 consolidada: merge de main.tex v0.8 + documento v1.0
++ acuerdos actuales.
+Periodo de referencia Plan original de 14 días (3–16 noviembre de 2026); fechas sujetas a
+replanificación.
+Herramientas Unity, C#, VS Code, OpenXR, XR Interaction Toolkit, Git y
+Overleaf.
+Repositorio Nuevo repositorio/modelo 3D; sus rutas y escena principal
+deben verificarse antes de integrar.
+Estado Código Core revisado por lectura; compilación, escenas, assets y
+ejecución sin confirmar en el nuevo repositorio.
+Resumen. La experiencia es una sola emergencia energética organizada en dos misiones conse-
+cutivas. En la primera, el astronauta encuentra un repuesto, lo introduce en una compuerta y
+utiliza una consola para sustituir el módulo mediante un sistema robótico. En la segunda, realiza
+una salida EVA, usa una unidad de maniobra personal inspirada en el MMU, repara el panel solar
+y regresa. El Core escalable controla 6 y 10 objetivos respectivamente; los minijuegos validan sus
+pasos internamente y se comunican con Core solo al terminar correctamente.
+Propósito y criterio de avance
+Documento común para los cinco integrantes: narrativa, requisitos, estructura modular, contratos de
+integración, roles, diagramas, pruebas y plan. “Escrito” no equivale a “integrado/probado”: los
+scripts se deben compilar, configurar y verificar en Unity sobre el repositorio nuevo.
+Página 1 de 23
+
+===== PAGE 2 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+1. Control de cambios y decisiones del merge
+Información del documento
+v0.8
+Tratamiento en v1.1
+Narrativa de despertar, alarma y
+Centro de Control
+Conservada; sigue separada de Core mediante un futuro
+GameIntroManager.
+Arquitectura escalable de
+MissionManager
+Conservada con API, propiedades, eventos y orden de
+notificación.
+Requisitos funcionales y no funcio-
+nales
+Conservados y ampliados para ambas misiones.
+Estructura de proyecto, VS Code,
+Unity y Git
+Conservada y adaptada; rutas exactas del nuevo repositorio
+aún no verificadas.
+Cuatro objetivos energéticos Sustituidos por seis: compuerta y consola robótica son ahora
+objetivos explícitos.
+EVA opcional Actualizada como segunda misión principal con diez
+objetivos; el minijuego exterior continúa provisional.
+Minijuego manual R&R del v0.8 Reemplazado por sustitución robótica desde consola para la
+primera misión.
+Roles y entregables de los cinco in-
+tegrantes
+Conservados y actualizados, incluida la mecánica de MMU y
+los dos minijuegos.
+Cinco UML y flujo antiguo Sustituidos por ocho diagramas nuevos, vectoriales y con
+fuentes editables.
+Pruebas, aceptación y cronograma
+de 14 días
+Conservados y revisados; no se presentan como pruebas ya
+realizadas.
+2. Concepto, narrativa y alcance
+2.1 Visión del videojuego
+Género: simulación espacial en primera persona. Modalidad: un jugador en VR. Meta: una
+experiencia corta y completa, de duración pendiente de validación con usuarios. La historia se
+estructura como una contingencia energética única, con dos reparaciones sucesivas. La victoria solo se
+declara tras finalizar la segunda misión.
+2.2 Introducción: despertar y alarma
+1. El astronauta despierta en una zona de descanso; se utiliza un fundido visual suave sin desplazar
+artificialmente la cámara del visor.
+2. Se escuchan alarmas y aparecen señales de emergencia.
+3. El Centro de Control informa que existe una anomalía en la distribución eléctrica.
+4. El jugador recibe controles básicos y se dirige al centro de mando.
+5. El sistema narrativo inicia Core mediante StartMission() una sola vez, en el momento definido
+por el equipo.
+Implementación prevista: GameIntroManager.cs, independiente de Core, con Diogo (escena-
+rio/luces), Camila (voz/UI), Santi (comodidad VR) y Luis (arranque). Estado: no confirmado como
+implementado.
+Página 2 de 23
+
+===== PAGE 3 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+2.3 Alcance aprobado
+Misión/fase Prioridad Descripción
+Misión 1 – Módulo energéti-
+co
+Principal / P0 Búsqueda del repuesto, compuerta, consola,
+minijuego de brazo robótico, verificación.
+Misión 2 – Panel solar Principal / P0 Equipamiento, esclusa, MMU simplificado,
+desplazamiento, minijuego EVA, retorno y
+estabilización.
+Comunicaciones y extras Fuera del alcan-
+ce actual
+Posibles ideas futuras, no forman parte de las dos
+misiones acordadas.
+Estrategia de construcción: aunque ambas misiones son parte del alcance final acordado, se
+implementará y probará primero la misión 1 completa para reducir el riesgo de integración.
+2.4 Base de realismo y adaptación educativa
+La sustitución robótica toma como referencia general operaciones de retirada y reemplazo de unidades
+mediante equipos robóticos de la ISS; el componente y la operación concreta dentro del juego son
+una adaptación ficticia. El MMU existió históricamente como unidad de maniobra, pero no es un
+vehículo de traslado rutinario en las EVA actuales. El minijuego del panel rasgado con refuerzos es
+una propuesta inicial, inspirada en reparaciones históricas; el equipo aún debe decidir su mecánica
+final. Ninguna secuencia del juego debe presentarse como procedimiento NASA real ni entrenamiento
+operativo.
+2.5 Mecánicas de interacción
+Mecánica Comportamiento esperado
+Locomoción VR Teletransporte/giro por saltos en interiores; seguimiento natural de
+cabeza y manos.
+Consolas Activar controles verificables; cada consola envía la acción adecuada.
+Módulo de reemplazo Agarrar, transportar, identificar y depositar el repuesto correcto en la
+compuerta.
+Minijuego robótico Controlar una vista/estación de operación que manipula y sustituye
+un módulo.
+Vista de consola Limitar locomoción mientras se opera; no fijar el movimiento
+natural de cabeza.
+EVA y MMU Preparación simplificada, navegación asistida, llegada y estabilización
+junto al panel.
+Minijuego EVA Inspección, manipulación de herramienta/repuesto y comprobación
+(mecánica final por decidir).
+Objetivos y reinicio Acciones fuera de orden rechazadas; objetos externos se restauran al
+reiniciar.
+3. Requisitos funcionales y no funcionales
+3.1 Requisitos funcionales (RF)
+ID Requisito Situación
+RF-01 Iniciar una secuencia de misiones configurada. Core escrito
+RF-02 Mostrar misión y objetivo vigentes mediante UI. API disponible; UI
+pendiente
+RF-03 Verificar acciones y bloquear las que estén fuera de orden. Core escrito
+Página 3 de 23
+
+===== PAGE 4 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+ID Requisito Situación
+RF-04 Avanzar automáticamente entre dos misiones configuradas. Core escrito
+RF-05 Reiniciar lógica y restaurar objetos interactivos externos. Lógica preparada;
+objetos pendientes
+RF-06 Recorrer la estación mediante VR. Por integrar
+RF-07 Manipular módulo, compuerta y consola robótica. Diseñado
+RF-08 Mostrar victoria solo tras finalizar la segunda misión. Evento disponible;
+UI pendiente
+RF-09 Añadir misiones por configuración de ScriptableObjects. Clases disponibles
+RF-10 Despertar, alarma y aviso de Centro de Control. Diseñado
+RF-11 Realizar EVA con MMU y retorno por esclusa. Diseñado
+RF-12 Completar minijuego robótico y emitir EnergyModuleInstalled. Diseñado
+RF-13 Completar minijuego exterior y emitir SolarPanelRepaired. Diseñado; mecánica
+provisional
+RF-14 Usar compuerta como paso propio y consola como acceso al minijuego. Diseñado
+RF-15 Registrar errores, resultados y pruebas por integrante. Pendiente de ejecu-
+ción
+3.2 Requisitos no funcionales (RNF)
+ID Condición esperada
+RNF-01 Rendimiento estable acorde a la tasa de refresco del visor y validado en hardware real.
+RNF-02 No mover artificialmente la cabeza/cámara VR; permitir orientación natural del usuario.
+RNF-03 Paneles, textos y botones legibles dentro del visor.
+RNF-04 Core independiente de modelos, nombres y jerarquías concretas de objetos 3D.
+RNF-05 Objetivos configurables por datos sin introducir transiciones fijas en el gestor.
+RNF-06 Control de versiones de escenas, prefabs y archivos .meta.
+RNF-07 Demostrar recorridos consecutivos sin errores críticos antes de la entrega.
+RNF-08 Minijuegos autocontenidos: restauración física separada del reinicio lógico.
+3.3 Limitaciones y dependencias
+El nuevo repositorio y la escena final no se adjuntaron en esta revisión. Por tanto,no se han verificado
+sus carpetas, paquetes, versiones exactas, errores de compilación ni referencias del Inspector. En el
+repositorio anterior se habían reportado errores de XR/Safe Mode; no asumir que el repositorio
+nuevo presenta el mismo problema ni que ya está resuelto. La física y seguridad de una EVA son
+simplificaciones educativas; el prototipo no reemplaza entrenamiento ni procedimientos espaciales
+reales.
+4. Organización modular y trabajo en repositorio nuevo
+4.1 Principio de separación
+Conservar los recursos importados del nuevo entorno 3D en sus ubicaciones originales y concentrar
+la lógica del juego en un módulo separado Assets/Game. Es una estructura recomendada, no una
+constatación de que esas rutas ya existan en el nuevo repositorio.
+Assets/
+[Entorno_3D_Nuevo]/ <- nombre real por verificar
+Game/
+Scenes/ <- escena de integracion por acordar
+Scripts/
+Core/
+MissionManager.cs
+MissionState.cs
+MissionAction.cs
+MissionActionBridge.cs
+Definitions/
+MissionDefinition.cs
+MissionObjective.cs
+Página 4 de 23
+
+===== PAGE 5 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+Interaction/ <- Yoshua
+RoboticRepair/ <- propuesta
+SolarPanelRepair/ <- propuesta
+VR/ <- Santi
+UI/ <- Camila
+Flow/ <- GameIntroManager (propuesto)
+Data/Missions/
+Mission_Energy.asset <- configurar desde Unity
+Mission_SolarPanel.asset <- configurar desde Unity
+Prefabs/Player/
+Prefabs/Interaction/
+Prefabs/UI/
+Art/Temporary/
+Art/Replacement/
+Audio/
+Tests/MissionDebugTester.cs
+Docs/
+Importante: los scripts de Core han sido escritos/revisados en la conversación, pero su presencia
+exacta dentro del repositorio nuevo está pendiente de comprobar. Los archivos .asset se crean desde
+Unity, no copiando texto en VS Code. No mover paquetes XR, XRI o recursos externos sin revisar
+referencias.
+4.2 Reglas de trabajo: VS Code, Unity y Git
+VS Code: scripts C#, documentación y revisión de cambios.
+Unity: edición de prefabs, escenas, ScriptableObjects, Inspector, eventos y pruebas de Play
+Mode.
+Git: incluir .meta; ignorar Library/, Temp/, Logs/ y artefactos temporales.
+Escena compartida: un responsable integra cambios de la escena principal; cada compañero
+entrega prefabs o componentes aislados para evitar conflictos.
+Migración: verificar escena inicial, paquetes, scripts duplicados, namespaces, referencias y cualquier
+SceneAutoLoader heredado antes de asumir que Core se ejecutará.
+5. Core: arquitectura y contrato público
+5.1 Componentes existentes a nivel de código
+Archivo Función
+MissionState.cs Define los estados NotStarted, InProgress y Completed.
+MissionAction.cs Define acciones reconocidas; se agregaron las acciones de compuerta,
+consola, MMU, llegada y verificación final.
+MissionObjective.cs Clase [Serializable] con objectiveId, description y
+requiredAction.
+MissionDefinition.cs ScriptableObject con ID, nombre, descripción y lista ordenada de
+objetivos.
+MissionManager.cs Gestor singleton que recibe acciones, avanza objetivos, cambia de
+misión y emite eventos.
+MissionActionBridge.cs Adaptador entre interacción y gestor; expone ExecuteAction() y
+TryExecuteAction().
+MissionDebugTester.cs Utilidad de pruebas manuales de acciones, inicio, reinicio y progreso.
+5.2 Regla de transición y datos
+MissionManager tiene una lista ordenada de MissionDefinition y dos índices: misión y objetivo
+actuales.
+TryCompleteAction(action) devuelve true solo si la secuencia está en progreso y la acción coincide
+con CurrentMissionObjective.RequiredAction.
+Página 5 de 23
+
+===== PAGE 6 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+Tras el objetivo final de la misión 1, se cambia a la misión 2. Tras el objetivo final de la misión 2, el
+estado pasa a Completed.
+Si llega una acción incorrecta o repetida fuera de secuencia, la acción se rechaza sin avanzar el
+objetivo.
+La comprobación de pieza correcta, pinza, fijación, pose de MMU o reparación física no la hace
+Core: corresponde a la lógica de Yoshua y Santi según el sistema.
+5.3 API pública para compañeros
+API Uso correcto
+MissionManager.Instance Acceso al gestor activo; comprobar que no sea null.
+StartMission() Inicia la secuencia solo si está NotStarted y existe
+configuración válida.
+TryCompleteAction(MissionAction) Devuelve bool; el objetivo se completa solo si coincide
+con la acción esperada.
+ResetMission() Reinicia estado e índices lógicos; los objetos físicos los
+restauran otros scripts.
+CurrentState NotStarted, InProgress o Completed.
+CurrentMission Definición de misión activa; puede ser null.
+CurrentMissionObjective Objetivo actual o null.
+CurrentMissionIndex Índice de misión activo; -1 antes del inicio.
+CurrentObjectiveIndex Índice de objetivo; -1 antes del inicio.
+CurrentObjective Texto para UI de objetivo actual, espera o finalización.
+MissionActionBridge.ExecuteAction() Método void, utilizable desde UnityEvents del Inspector.
+MissionActionBridge.TryExecuteAction() Método bool, utilizable por scripts que necesitan
+conocer aceptación/rechazo.
+MissionActionBridge.BeginMission() Puente de inicio.
+MissionActionBridge.RestartMission() Puente de reinicio.
+5.4 Compatibilidad del enum MissionAction
+El enum contiene actualmente 17 valores (0–16). Para conservar referencias serializadas por Unity,
+los valores existentes 0–11 no deben renumerarse. Las cinco acciones incorporadas para las nuevas
+mecánicas son:
+Valor Acción añadida
+12 EnergyModuleLoadedIntoHatch
+13 RoboticConsoleActivated
+14 MMUActivated
+15 SolarPanelReached
+16 StationPowerVerified
+Las acciones EnergyModuleInstalled (2) y SolarPanelRepaired (9) siguen indicando lafinalización
+de sus respectivos minijuegos, no cada paso interno. SafetyTetherAttached (8) permanece
+disponible por compatibilidad, sin configurarse en los diez objetivos EVA acordados.
+Página 6 de 23
+
+===== PAGE 7 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+5.5 Eventos públicos y orden exacto
+Evento Cuándo se emite
+OnMissionStarted Inicio de la secuencia completa.
+OnMissionChanged(MissionDefinition) Comienzo de primera misión o cambio a la siguiente.
+OnObjectiveChanged(MissionState,string) Objetivo/texto actualizado, incluidos inicio, reinicio y
+fin.
+OnMissionCompleted Solo cuando finaliza la última misión configurada.
+OnMissionReset Solicitud de restaurar componentes externos tras
+reinicio lógico.
+Secuencia exacta del código revisado:
+Inicio: OnMissionStarted → OnMissionChanged → OnObjectiveChanged.
+Objetivo intermedio: OnObjectiveChanged.
+Cambio misión 1 → 2: OnMissionChanged → OnObjectiveChanged.
+Último objetivo de la secuencia: OnObjectiveChanged → OnMissionCompleted.
+Reinicio: OnObjectiveChanged → OnMissionReset.
+Limitación de validación. El Core actual compara el tipo y orden de MissionAction; no
+autentica qué GameObject originó la acción ni valida identificadores duplicados. Yoshua debe
+garantizar la fuente y precondiciones antes de enviar cada acción. Luis validará los IDs y el
+orden al crear los .asset.
+6. Misión 1: sustitución robótica del módulo energético
+MissionId: mission_energy. Asset previsto: Mission_Energy.asset. Estado: especificación lista;
+configuración/ejecución no verificadas.
+6.1 Seis objetivos de Core
+ID RequiredAction Descripción del objetivo
+energy_01 EmergencyActivated Activar protocolo de emergencia.
+energy_02 EnergyModuleCollected Localizar y recoger el repuesto.
+energy_03 EnergyModuleLoadedIntoHatch Introducir repuesto en compuerta de
+mantenimiento.
+energy_04 RoboticConsoleActivated Activar consola de control robótico.
+energy_05 EnergyModuleInstalled Sustituir módulo mediante el minijuego.
+energy_06 RepairConfirmed Verificar y confirmar reparación.
+6.2 Minijuego robótico desde consola
+Diseño aprobado: el astronauta coloca el repuesto en la compuerta y utiliza una pantalla/consola
+que muestra una cámara robótica. No manipula directamente el módulo averiado con sus manos dentro
+de un rack; lo manipula a través del brazo o sonda controlada desde la consola.
+1. Identificar el módulo defectuoso con ayuda del Centro de Control.
+2. Mover y orientar el brazo o sonda hacia el módulo averiado.
+3. Sujetar, extraer y depositar el módulo defectuoso en zona segura.
+4. Recoger el repuesto de la compuerta.
+5. Orientar, insertar y asegurar el módulo nuevo.
+6. Ejecutar la comprobación de instalación.
+Condición de éxito: después de comprobar todos los pasos, Yoshua envía EnergyModuleInstalled
+Página 7 de 23
+
+===== PAGE 8 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+una sola vez. Camila muestra progreso e instrucciones; Santi implementa el cambio al modo consola
+sin bloquear la cabeza; Diogo entrega los modelos robóticos y de compuerta. Core avanza entonces al
+objetivo RepairConfirmed; no marca aún la misión 1 como completada.
+7. Misión 2: reparación exterior del panel solar
+MissionId: mission_solar. Asset previsto: Mission_SolarPanel.asset. Estado: secuencia defi-
+nida; diseño final del minijuego en discusión.
+7.1 Diez objetivos de Core
+ID RequiredAction Descripción del objetivo
+solar_01 SuitEquipped Equiparse con el traje espacial.
+solar_02 SuitSystemsChecked Verificar los sistemas del traje.
+solar_03 EVAPreparationCompleted Completar preparación EVA.
+solar_04 AirlockDepressurized Despresurizar la esclusa.
+solar_05 MMUActivated Activar silla/propulsor personal simplificado.
+solar_06 SolarPanelReached Llegar y estabilizarse junto al panel.
+solar_07 SolarPanelRepaired Reparar el panel exterior.
+solar_08 ReturnedToAirlock Regresar a la esclusa.
+solar_09 AirlockRepressurized Completar retorno y represurización.
+solar_10 StationPowerVerified Confirmar sistema energético estabilizado.
+7.2 Minijuego exterior provisional
+El equipo decidió desarrollar dos misiones, pero aún no fijó la mecánica definitiva de reparación
+del panel. Propuesta de referencia: panel rasgado con instalación simplificada de refuerzos. Flujo
+interno sugerido:
+1. Inspeccionar visualmente y localizar el daño.
+2. Recibir la instrucción del Centro de Control.
+3. Elegir herramienta o pieza adecuada.
+4. Liberar elemento atascado y colocar refuerzos o efectuar la mecánica que se acuerde.
+5. Revisar fijaciones y solicitar prueba de funcionamiento.
+Condición de éxito: Yoshua valida el minijuego y envía SolarPanelRepaired. No finaliza la
+partida: faltan regreso, represurización y StationPowerVerified. El movimiento con MMU pertenece
+a Santi; el panel, soportes y exterior pertenecen a Diogo; la guía y telemetría visual a Camila.
+SafetyTetherAttached permanece en el enum por compatibilidad, pero no forma parte de los diez
+objetivos vigentes.
+8. Protocolo de integración para cada compañero
+8.1 Contrato mínimo obligatorio
+1. El sistema externo verifica su interacción y condiciones físicas o lógicas.
+2. Desde un UnityEvent se llama a ExecuteAction() del puente. Desde C# se puede utilizar
+TryExecuteAction() para obtener true o false.
+3. El puente busca MissionManager y entrega MissionAction configurada.
+4. Core devuelve true/false; si acepta, cambia objetivo o misión y comunica eventos a la UI.
+5. Ante OnMissionReset, el sistema externo restituye objetos, controles y estados locales. No debe
+emitir automáticamente acciones durante el reinicio.
+Listing 1: Ejemplo del contrato desde un controlador externo (fragmento ilustrativo)
+Página 8 de 23
+
+===== PAGE 9 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+// Configurar el puente en el Inspector con la accion correcta.
+[SerializeField] MissionActionBridge actionBridge;
+public void OnRoboticRepairVerified()
+{
+if (!AllRepairChecksPassed()) return;
+bool accepted = actionBridge.TryExecuteAction();
+if (accepted) { /* impedir repetir el envio */ }
+}
+Atención: AllRepairChecksPassed() es un nombre ilustrativo, no un método existente de Core. El
+minijuego implementa su propia validación; Core no debe importarlo ni conocerlo.
+8.2 Tabla de acciones, fuentes y responsables
+MissionAction Condición previa que valida el sistema ex-
+terno
+Responsable princi-
+pal
+EmergencyActivated Consola inicial activada correctamente. Yoshua
+EnergyModuleCollected Repuesto válido recogido. Yoshua + Santi
+EnergyModuleLoadedIntoHatch Repuesto correcto depositado en compuerta. Yoshua
+RoboticConsoleActivated Consola en modo de operación válido. Yoshua + Santi
+EnergyModuleInstalled Todos los pasos del minijuego robótico verificados. Yoshua
+RepairConfirmed Diagnóstico final confirmado en consola. Yoshua + Camila
+SuitEquipped Equipamiento simulado completado. Yoshua
+SuitSystemsChecked Checklist de traje confirmado. Yoshua + Camila
+EVAPreparationCompleted Preparación de salida completada. Yoshua
+AirlockDepressurized Esclusa completó secuencia simulada. Yoshua
+MMUActivated Unidad de maniobra disponible y activada. Santi
+SolarPanelReached Llegada y estabilización válidas en destino. Santi
+SolarPanelRepaired Minijuego exterior verificado. Yoshua
+ReturnedToAirlock Astronauta retornó a zona de entrada. Santi + Yoshua
+AirlockRepressurized Esclusa finalizó retorno seguro simulado. Yoshua
+StationPowerVerified Confirmación final energética realizada. Yoshua + Camila
+8.3 Reinicio, errores y contratos adicionales
+Acción fuera de orden: Core devuelve false. El objeto no debe cambiar a “completado” si la
+acción fue rechazada.
+Una sola emisión: el minijuego evita disparar repetidamente el evento de éxito (y debe manejar
+correctamente los reintentos tras reiniciar).
+Origen confiable: validar objeto, zona, pose y estado local antes del envío; Core hoy solo coteja el
+enum.
+Eventos de UI: Camila se suscribe/desuscribe correctamente; no modificar índices ni el enum
+desde UI.
+Consola VR: deshabilitar solo traslación/teleportación cuando corresponda, mantener libre el
+tracking de cabeza, y restaurar locomoción al salir o al reiniciar.
+Cambio de misión: la misión 1 finaliza con RepairConfirmed; Core emite OnMissionChanged
+para iniciar misión 2 y no emite aún OnMissionCompleted.
+9. Responsabilidades detalladas y entregables
+La división se basa en P0 (dos misiones acordadas), P1 (acabado y mejoras de inmersión) y P2 (extras
+fuera del alcance). La asignación de trabajo no prueba que la funcionalidad ya se haya implementado.
+Página 9 de 23
+
+===== PAGE 10 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+9.1 Resumen de encargados
+Persona Área Entregable principal
+Luis Coordinación y Core Secuencia de 6+10 objetivos, configuración de assets,
+pruebas y contratos públicos estables.
+Santi VR y controles XR Origin, locomoción, mandos, modo consola robótica y
+MMU.
+Yoshua Objetos y minijuegos Interacciones físicas y ambos minijuegos con resultados
+enviados a Core.
+Diogo Escenario y modelado Nuevo entorno 3D navegable, compuerta, brazo, exterior,
+panel, colliders y prefabs.
+Camila UI, narrativa y pruebas Panel de misión, mensajes/voz de Centro de Control,
+checklist y pruebas registradas.
+9.2 Luis — Coordinación y sistema Core
+[P0] Mantener el contrato MissionAction, la API de MissionManager, los eventos y el puente sin
+mezclar lógica física de los minijuegos.
+[P0] Confirmar compilación y compatibilidad del Core en el nuevo repositorio; evitar duplicar
+MissionManager.
+[P0] Crear desde Unity Mission_Energy.asset (6 objetivos) y Mission_SolarPanel.asset (10
+objetivos), asignarlos en ese orden al gestor y validar IDs únicos.
+[P0] Probar acciones correctas, erróneas, repetidas, reinicio, cambio de misión y victoria mediante
+MissionDebugTester y pruebas reales.
+[P0] Definir criterios de éxito de cada minijuego y revisar el contrato de emisión con Yoshua y Santi.
+[P0] Coordinar ramas Git, prefabs, revisión de escenas y documentación del nuevo repositorio.
+[P1] Integrar el inicio narrativo mediante GameIntroManager, sin introducir efectos narrativos
+dentro de Core.
+Entrega verificable: dos assets ordenados y comprobados, checklist de pruebas Core, documentación
+y comunicación estable con otros sistemas.
+9.3 Santi — Sistema VR, consola y MMU
+[P0] Configurar OpenXR/XR Interaction Toolkit, XR Origin, manos/mandos, movimiento cómodo
+e interactores.
+[P0] Preparar agarre, soltado, interacción con botones y puntos de control del entorno entregados
+por Diogo/Yoshua.
+[P0] Implementar transición al modo de consola robótica: bloquear la locomoción, no la cabeza;
+restaurar el control al salir/reiniciar.
+[P0] Implementar controlador de MMU simplificado, navegación y estabilización junto al panel (en
+coordinación con Yoshua).
+[P0] Verificar que MMUActivated y SolarPanelReached solo se emitan cuando correspondan.
+[P1] Medir confort y rendimiento en visor real, documentando mareos, accesibilidad y fallos de
+control.
+Entrega verificable: prefab/escena VR funcional, vista de consola cómoda y ruta EVA/MMU
+terminada hasta punto de reparación.
+9.4 Yoshua — Interacciones y los dos minijuegos
+[P0] Crear consola principal, repuesto agarrable, compuerta que valida la pieza correcta y acceso a
+consola robótica.
+[P0] Implementar minijuego de brazo o sonda: mover, sujetar, extraer, depositar, tomar repuesto,
+Página 10 de 23
+
+===== PAGE 11 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+instalar, asegurar y comprobar.
+[P0] Enviar EnergyModuleInstalled solo tras éxito; proporcionar mecanismo de confirmación final
+RepairConfirmed.
+[P0] Crear interacciones de traje, checklist, preparación EVA y esclusa en coordinación con San-
+ti/Camila.
+[P0] Programar el minijuego del panel cuando se acuerde su mecánica. Tras verificarlo, emitir
+SolarPanelRepaired.
+[P0] Restaurar compuerta, brazos, piezas, panel, herramientas y estados al reiniciar mediante
+OnMissionReset.
+[P1] Añadir ayudas visuales, tolerancias de precisión, corrección de errores, sonido/háptica si resulta
+viable.
+Entrega verificable: prefabs que funcionan sin depender de una escena específica y que emiten a
+Core solo acciones válidas.
+9.5 Diogo — Entorno, modelos y ensamblaje 3D
+[P0] Identificar y preparar en el nuevo repositorio la estación, almacenamiento del repuesto,
+ingeniería, consola y acceso EVA.
+[P0] Entregar modelos de módulo, compuerta, brazo/sonda, depósito de pieza averiada, pantalla de
+control y soportes.
+[P0] Preparar esclusa, traje/soportes, MMU simplificado, exterior, panel averiado, zona de anclaje
+y herramientas de reparación.
+[P0] Ajustar colisiones, puntos de agarre, escalas, iluminación, rutas navegables y optimización VR
+con Santi y Yoshua.
+[P1] Preparar zona de despertar, luces de alarma y efectos de daño/reparación de ambos sistemas.
+[P0] Evitar romper rutas o referencias de assets importados; entregar prefabs modulares y coordinar
+ediciones de escena.
+Entrega verificable: entorno integrable con puntos de interacción accesibles y sin referencias rotas.
+9.6 Camila — UI, Centro de Control, narrativa y pruebas
+[P0] Mostrar misión actual, objetivo y estado utilizando CurrentMission, CurrentObjective y
+eventos Core.
+[P0] Escuchar eventos OnMissionChanged y OnObjectiveChanged, así como OnMissionCompleted
+y OnMissionReset. Desuscribirse al desactivar el componente.
+[P0] Mostrar checklist guiado del minijuego robótico y del minijuego EVA; estos checklists no
+completan objetivos por sí mismos.
+[P0] Preparar instrucciones del Centro de Control, errores, confirmaciones y estados de navegación
+EVA/MMU.
+[P0] Registrar pruebas, evidencias, errores, responsables y correcciones de integración.
+[P1] Preparar introducción narrativa, subtítulos, mensajes y pantalla de victoria; comprobar
+legibilidad en visor.
+Entrega verificable: UI reactiva a Core y pruebas documentadas de ambos recorridos.
+Página 11 de 23
+
+===== PAGE 12 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+9.7 Entrega entre integrantes
+Entrega Qué debe recibir el siguiente integrante
+Luis → Yoshua/Santi Acciones, orden, estados, contratos de minijuegos, reglas de emisión y
+reinicio.
+Luis → Camila Eventos y propiedades para texto, cambio de misión, victoria y reinicio.
+Santi → Yoshua Interactores VR, agarre, mando de consola, desplazamiento MMU y
+estabilización.
+Diogo → Yoshua/Santi Modelos, colliders, zonas, sockets, puntos de agarre y escena integrable.
+Yoshua → Luis/Camila Prefabs y eventos de éxito de cada minijuego; estados internos para
+checklist UI.
+Camila → todos Textos, paneles, indicadores, mensajes y resultados de pruebas.
+10. Diagramas de flujo de las dos misiones
+Los diagramas se almacenan como PDF vectoriales en figs/ y se incluyen automáticamente. Los
+flujos apaisados pueden editarse desde make_flow_diagrams.py; los cinco diagramas de arquitectura
+desde sus fuentes .dot.
+Página 12 de 23
+
+===== PAGE 13 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+Figura 1: Flujo general de toda la experiencia: despertar, dos misiones, validaciones y final de partida.
+Página 13 de 23
+
+===== PAGE 14 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+Figura 2: Flujo de la misión 1: seis acciones de Core y minijuego de sustitución robótica.
+Página 14 de 23
+
+===== PAGE 15 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+Figura 3: Flujo de la misión 2: diez acciones de Core, MMU, minijuego EVA propuesto y regreso.
+Página 15 de 23
+
+===== PAGE 16 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+11. Diagramas de arquitectura y UML
+Estas cinco figuras reemplazan los diagramas de la versión anterior: se prioriza mostrar relaciones de
+sistema actualizadas y no transiciones obsoletas de cuatro objetivos.
+Página 16 de 23
+
+===== PAGE 17 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+Módulos externos al Core
+Core · Luis
+Entradas XR
+Acción válida
+Colliders / anclajes
+TryCompleteAction
+OnMissionReset
+Eventos y getters
+Objetivos ordenados
+Conﬁgura
+Santi · XR / VR
+Locomoción, controles,
+vista de consola y MMU
+Yoshua · Interacciones
+Compuerta, minijuegos,
+validaciones físicas
+Diogo · Nuevo escenario
+Modelos 3D, colisiones,
+puntos de interacción
+Camila · UI y narrativa
+Objetivos, checklist,
+Centro de Control
+MissionActionBridge
+ExecuteAction() / TryExecuteAction()
+MissionManager
+TryCompleteAction()
+StartMission() / ResetMission()
+MissionDeﬁnition
+MissionObjective
+MissionAction / MissionState
+Datos Unity
+Mission_Energy.asset
+Mission_SolarPanel.asset
+Figura 4: Diagrama de componentes: dependencias entre VR, interacciones, escena, Core y UI.
+Página 17 de 23
+
+===== PAGE 18 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+1 .. * misiones estado
+1 .. * objetivos
+usa
+invoca
+envía
+MissionManager
+missions : List<MissionDeﬁnition>
+currentState : MissionState
+currentMissionIndex : int
+currentObjectiveIndex : int
++ StartMission()
++ TryCompleteAction(MissionAction) : bool
++ ResetMission()
++ CurrentMission
++ CurrentMissionObjective
++ CurrentObjective
+MissionDeﬁnition
+missionId : string
+missionName : string
+description : string
+objectives : List<MissionObjective>
++ Objectives
++ ObjectiveCount
+MissionObjective
+objectiveId : string
+description : string
+requiredAction : MissionAction
++ Description
++ RequiredAction
+MissionActionBridge
+missionManager : MissionManager
+action : MissionAction
++ ExecuteAction()
++ TryExecuteAction() : bool
++ BeginMission()
++ RestartMission()
+«enum» MissionAction
+17 valores actuales
+(p.ej. EnergyModuleInstalled,
+SolarPanelRepaired)
+«enum» MissionState
+NotStarted | InProgress | Completed
+Figura 5: Diagrama de clases resumido: relaciones y métodos públicos principales de Core.
+Página 18 de 23
+
+===== PAGE 19 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+No Sí
+Reintentar
+Eventos
+Jugador
+Ejecuta interacción válida
+Yoshua / Santi
+Validación de minijuego
+y condiciones físicas
+MissionActionBridge
+TryExecuteAction()
+MissionManager
+TryCompleteAction(action)
+¿Coincide con
+objetivo activo?
+Camila · UI
+OnObjectiveChanged
+OnMissionChanged (si procede)
+false: no cambia el estado
+El objeto permite corregir
+true: avanza objetivo
+o misión
+Figura 6: Secuencia de una interacción: validación externa, puente, Core y eventos para la interfaz.
+Página 19 de 23
+
+===== PAGE 20 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+StartMission()
+conﬁguración válida
+ResetMission()
+Objetivo aceptado
+(continúa / cambia misión)
+Último objetivo
+de la última misión
+ResetMission()
+NotStarted
+InProgress
+CurrentMissionIndex
+CurrentObjectiveIndex
+Completed
+Figura 7: Diagrama de estados de Core: inicio, progreso, fin y reinicio.
+Página 20 de 23
+
+===== PAGE 21 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+No Sí
+Corrección
+Sí
+No
+Jugador entra a la estación
+Narrativa de despertar
+y alarma (sistema separado)
+Core: StartMission()
+VR / interacción:
+Jugador realiza acción o minijuego
+Core valida
+MissionAction
+Rechazar y mantener
+objetivo actual
+Actualizar objetivo;
+notiﬁcar a UI
+¿Quedan objetivos
+o misiones?
+Core: OnMissionCompleted
+Figura 8: Diagrama de actividades: ejecución de objetivos y decisión sobre el estado de la secuencia.
+12. Pruebas y criterios de aceptación
+12.1 Dependencias antes de probar
+1. Identificar escena y versión Unity del nuevo repositorio, revisar compilación y paquetes XR.
+2. Confirmar que no existan scripts/clases duplicados de MissionManager y que las referencias del
+Inspector estén listas.
+3. Crear en Unity Mission_Energy.asset y Mission_SolarPanel.asset, con 6 y 10 objetivos res-
+pectivamente.
+Página 21 de 23
+
+===== PAGE 22 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+4. Asignar ambos assets, en ese orden, a un solo MissionManager y usar MissionDebugTester para
+probar sin depender del visor.
+5. Conectar prefabs VR, interacciones, UI y minijuegos; repetir pruebas en Play Mode y hardware
+real.
+12.2 Matriz de pruebas funcionales
+Caso Prueba Resultado esperado Estado
+P01 Iniciar con 2 misiones válidas. InProgress, primera misión, primer ob-
+jetivo.
+Pendiente
+P02 Enviar las 6 acciones de misión 1 en orden. Inicia misión 2; OnMissionChanged, sin
+victoria.
+Pendiente
+P03 Enviar acción incorrecta. false, no cambia índice. Pendiente
+P04 Repetir acción ya completada. Rechazo si no corresponde al objetivo
+actual.
+Pendiente
+P05 Reiniciar y volver a iniciar. NotStarted, índices reiniciados. Pendiente
+P06 Iniciar sin assets configurados. Error de configuración y no arranca. Pendiente
+P07 Verificar transición 1 → 2. Misión 2 comienza en SuitEquipped. Pendiente
+P08 Enviar las 10 acciones de misión 2. OnMissionCompleted una sola vez. Pendiente
+P09 Duplicar gestor en escena. Se detecta y desactiva duplicado. Pendiente
+P10 Observar orden de eventos. Respeta el orden documentado en Core. Pendiente
+P11 Completar minijuego robótico parcialmente. No se envía EnergyModuleInstalled. Pendiente
+P12 Terminar minijuego robótico y confirmar. Se envía una sola vez; luego espera
+RepairConfirmed.
+Pendiente
+P13 Llegar sin estabilizar MMU. No se envía SolarPanelReached. Pendiente
+P14 Completar panel sin terminar retorno. No termina el juego antes de
+StationPowerVerified.
+Pendiente
+P15 Reiniciar durante minijuego / EVA. Se restauran controles, piezas, UI y ac-
+ciones.
+Pendiente
+P16 Ejecutar tres recorridos completos. Sin errores críticos y con confort VR
+aceptable.
+Pendiente
+12.3 Evidencia de pruebas
+Registrar por caso: fecha, responsable, escena/versión de Unity, resultado (aprobado/fallido/pendiente),
+evidencia y corrección.En esta documentación no se han declarado pruebas aprobadas porque
+no existe evidencia de su ejecución sobre el repositorio nuevo.
+13. Plan de trabajo y prioridades
+Referencia histórica: el cronograma original de 14 días abarca del 3 al 16 de noviembre de 2026.
+Se conserva como planificación base, no como estado real de tareas terminadas. El acuerdo de dos
+misiones y la migración de repositorio obligan a revisar tiempos.
+Página 22 de 23
+
+===== PAGE 23 =====
+NASA Space Apps | Unity VR Merge técnico v1.1
+Tramo de trabajo Responsables Entregable de control
+Repositorio y Core Luis + Santi (XR) Proyecto compila; Core se detecta, sin
+gestores duplicados.
+Misión 1 – base Luis + Yoshua + Diogo Repuesto, compuerta, consola y seis
+objetivos conectados.
+Minijuego robótico Yoshua + Santi + Camila Brazo operable; éxito validado; panel de
+instrucciones; reinicio.
+Misión 2 – exterior Santi + Diogo + Yoshua Traje, esclusa, ruta MMU y llegada al
+panel.
+Minijuego EVA + retorno Yoshua + Camila + Santi Reparación terminada, retorno y
+verificación energética.
+Pruebas y entrega Todos, coordinación Luis Escena final, test matrix, build,
+documentación y demostración.
+13.1 Priorización ante bloqueos
+1. Primero: estabilidad del repositorio, Core compilado y seis objetivos de misión 1 verificables.
+2. Segundo: minijuego robótico y misión 1 completa en VR, con vista de consola cómoda y reinicio.
+3. Tercero: EVA/MMU, minijuego del panel y retorno de misión 2, con pruebas de seguridad VR.
+4. Después: pulido narrativo/visual, háptica, efectos y extras sin comprometer los flujos obligatorios.
+14. Estado real y siguientes pasos
+Código revisado: MissionManager.cs, MissionDefinition.cs y MissionObjective.cs.
+Código actualizado: MissionAction.cs y MissionActionBridge.cs. Falta confirmar la compi-
+lación de ambos en el nuevo repositorio.
+Configuración pendiente de verificar: Mission_Energy.asset y Mission_SolarPanel.asset.
+No se deben suponer creados hasta verlos en Unity.
+Interacciones pendientes: compuerta, consola robótica, brazo/sonda, trajes, esclusa, MMU, panel
+y minijuegos.
+UI pendiente de integrar: objetivos, mensajes de Centro de Control, checklist, alertas, victoria y
+reinicio.
+Escenario actual: nuevo repositorio/modelo 3D, todavía en proceso de pulido. Rutas exactas y
+compatibilidad de assets sin comprobar en este documento.
+Criterio de cierre del proyecto. Un jugador puede iniciar la experiencia, realizar la misión
+robótica, recibir la segunda alerta, prepararse para salir, maniobrar hasta el panel, repararlo, volver
+a la estación y confirmar la estabilización energética, sin saltos de objetivos ni bloqueos críticos.
+Los minijuegos notifican su éxito una vez; Core gestiona el orden y la UI refleja el progreso.
+Nota de control: consolidado al 6 de noviembre de 2026 a partir del main.tex aportado por el usuario y del documento
+v1.0. Los resultados de compilación y pruebas de Unity requieren verificación independiente.
+Página 23 de 23

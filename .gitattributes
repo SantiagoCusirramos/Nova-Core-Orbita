@@ -97,6 +97,15 @@ Packages/packages-lock.json linguist-generated
 *.stl                   lfs
 *.ztl                   lfs
 
+# 3D (añadidos para Nova: glTF/GLB, USD)
+*.glb                   lfs
+*.gltf                  lfs
+*.usdz                  lfs
+*.usd                   lfs
+*.usdc                  lfs
+*.abc                   lfs
+*.bin                   lfs
+
 # Audio
 *.aif                   lfs
 *.aiff                  lfs

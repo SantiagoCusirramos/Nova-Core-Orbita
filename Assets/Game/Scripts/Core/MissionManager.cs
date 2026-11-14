@@ -85,8 +85,15 @@ public class MissionManager : MonoBehaviour
 
     public event Action<MissionState, string> OnObjectiveChanged;
 
-    // Nuevo evento: cambia la mision o fase actual
+    // Nuevo evento: cambia la mision o fase actual (null al reiniciar)
     public event Action<MissionDefinition> OnMissionChanged;
+
+    // Nuevo evento: se acepto una accion (antes de avanzar al siguiente objetivo).
+    // Lo usan los objetos de escena para reaccionar (abrir compuertas, ocultar piezas...).
+    public event Action<MissionAction> OnActionCompleted;
+
+    // Lista de misiones configuradas (solo lectura)
+    public IReadOnlyList<MissionDefinition> Missions => missions;
 
     // INICIALIZACION
     private void Awake()
@@ -169,6 +176,8 @@ public class MissionManager : MonoBehaviour
 
         Debug.Log("Objetivo completado: " + objective.Description);
 
+        OnActionCompleted?.Invoke(action);
+
         AdvanceObjective();
 
         return true;
@@ -231,6 +240,7 @@ public class MissionManager : MonoBehaviour
 
         NotifyObjectiveChanged();
 
+        OnMissionChanged?.Invoke(null);
         OnMissionReset?.Invoke();
 
         Debug.Log("Secuencia de misiones reiniciada.");
@@ -288,4 +298,4 @@ public class MissionManager : MonoBehaviour
 
         return true;
     }
-}
+}

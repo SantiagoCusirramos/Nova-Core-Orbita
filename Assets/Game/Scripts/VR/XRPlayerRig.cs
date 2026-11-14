@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.XR;
 using UnityEngine.XR;
-using UnityEngine.XR.Management;
 
 namespace NovaCore
 {
@@ -60,6 +59,19 @@ namespace NovaCore
         private float nextFloorRetry;
         const float FLOOR_RETRY = 1f;
 
+        private Transform leftHand;
+        private Transform rightHand;
+
+        // ── API pública (la usan NovaInteractionRig y otros sistemas) ─────────
+        /// <summary>Se invoca una vez cuando el rig VR queda construido.</summary>
+        public static event System.Action<XRPlayerRig> RigBuilt;
+
+        public bool      IsBuilt      => rigBuilt;
+        public Transform CameraOffset => cameraOffset;
+        public Transform LeftHand     => leftHand;
+        public Transform RightHand    => rightHand;
+        public Camera    HeadCamera   => headCamera;
+
         // ── Ciclo ─────────────────────────────────────────────────────────────
 
         private void Awake()
@@ -109,6 +121,8 @@ namespace NovaCore
 
             if (logDeviceInfo) LogDevices();
             Debug.Log("[XRPlayerRig] Rig VR construido correctamente.", this);
+
+            RigBuilt?.Invoke(this);
         }
 
         // ── Input Actions ────────────────────────────────────────────────────
@@ -174,11 +188,11 @@ namespace NovaCore
         private void CreateHands()
         {
             var parent = cameraOffset != null ? cameraOffset : transform;
-            CreateHand("Left Hand",  parent, LeftPos,  LeftRot,  LeftTrack,  leftControllerModelPrefab);
-            CreateHand("Right Hand", parent, RightPos, RightRot, RightTrack, rightControllerModelPrefab);
+            leftHand  = CreateHand("Left Hand",  parent, LeftPos,  LeftRot,  LeftTrack,  leftControllerModelPrefab);
+            rightHand = CreateHand("Right Hand", parent, RightPos, RightRot, RightTrack, rightControllerModelPrefab);
         }
 
-        private void CreateHand(string handName, Transform parent,
+        private Transform CreateHand(string handName, Transform parent,
                                  string posBinding, string rotBinding, string trackBinding,
                                  GameObject modelPrefab)
         {
@@ -192,6 +206,8 @@ namespace NovaCore
 
             if (modelPrefab != null)
                 Instantiate(modelPrefab, go.transform, false).name = handName + " Visual";
+
+            return go.transform;
         }
 
         // ── TrackedPoseDriver helper ─────────────────────────────────────────
@@ -299,10 +315,8 @@ namespace NovaCore
 
         // ── Util ─────────────────────────────────────────────────────────────
 
-        private static bool IsXRActive()
-        {
-            var loader = XRGeneralSettings.Instance?.Manager?.activeLoader;
-            return loader != null || XRSettings.isDeviceActive;
-        }
+        // Mismo criterio que OrbitFreeFly y la interacción (NovaXR.IsActive), para que
+        // nunca haya un sistema en modo VR y otro en modo escritorio a la vez.
+        private static bool IsXRActive() => NovaXR.IsActive;
     }
 }

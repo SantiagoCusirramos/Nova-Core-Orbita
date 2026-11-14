@@ -43,6 +43,7 @@ namespace NovaCore
 
         // ── Estado ───────────────────────────────────────────────────────────
         private PlayerMode _currentMode;
+        private bool       _menuWasPressed;
         public  PlayerMode CurrentMode => _currentMode;
 
         // ────────────────────────────────────────────────────────────────────
@@ -70,8 +71,13 @@ namespace NovaCore
 
             // VR: menu button (Oculus menu, botón ☰ del mando izquierdo)
             var leftHand = UnityEngine.XR.InputDevices.GetDeviceAtXRNode(UnityEngine.XR.XRNode.LeftHand);
-            if (leftHand.isValid && leftHand.TryGetFeatureValue(UnityEngine.XR.CommonUsages.menuButton, out bool menu) && menu)
+            bool menu = leftHand.isValid
+                     && leftHand.TryGetFeatureValue(UnityEngine.XR.CommonUsages.menuButton, out bool pressed)
+                     && pressed;
+            // Solo en el flanco de subida: mantener el botón no alterna el modo cada frame.
+            if (menu && !_menuWasPressed)
                 ToggleMode();
+            _menuWasPressed = menu;
         }
 
         // ────────────────────────────────────────────────────────────────────

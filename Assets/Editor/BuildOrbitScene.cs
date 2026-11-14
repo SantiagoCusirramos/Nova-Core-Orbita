@@ -9,7 +9,7 @@
 ///   2. Crea / actualiza los materiales del skybox (2K para Quest, 4K HDR para PC).
 ///   3. Abre / recrea la escena 01_Orbit.
 ///   4. Coloca la ISS_stationary.glb con materiales URP.
-///   5. Crea el Player con OrbitFreeFly + VRMovement + XRPlayerRig.
+///   5. Crea el Player con OrbitFreeFly + XRPlayerRig + NovaInteractionRig.
 ///   6. Coloca la cámara encuadrando la ISS a ~180 m.
 ///   7. Configura la luz solar alineada con el Sol del skybox.
 ///   8. Crea el Global Volume con perfil de post-proceso.
@@ -94,7 +94,7 @@ public static class BuildOrbitScene
                 "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n" +
                 "JERARQUÍA:\n" +
                 "  Sun              Directional Light (alineada con el skybox)\n" +
-                "  Player           OrbitFreeFly + VRMovement + XRPlayerRig\n" +
+                "  Player           OrbitFreeFly + XRPlayerRig + NovaInteractionRig\n" +
                 "  └─ Main Camera\n" +
                 "  ISS              ISS_stationary.glb (estática)\n" +
                 "  Global Volume    Post-proceso URP\n\n" +
@@ -306,15 +306,13 @@ public static class BuildOrbitScene
         var fly = playerGO.AddComponent<NovaCore.OrbitFreeFly>();
         fly.moveSpeed = 25f;
 
-        // Movimiento VR — se combina con TrackedPoseDriver en la cámara
-        playerGO.AddComponent<NovaCore.VRMovement>();
-
-        // Rig XR runtime — crea TrackedPoseDrivers para cabeza y mandos al iniciar en VR
+        // Rig XR runtime — crea TrackedPoseDrivers para cabeza y mandos al iniciar en VR.
+        // NOTA (decisión cerrada, HANDOFF §7): NO se añade VRMovement ni PlayerModeSwitcher;
+        // OrbitFreeFly ya cubre escritorio y VR. Añadir ambos duplica el movimiento.
         playerGO.AddComponent<NovaCore.XRPlayerRig>();
 
-        // Switcher espectador/interactivo (empieza en modo espectador/vuelo libre)
-        var sw = playerGO.AddComponent<NovaCore.PlayerModeSwitcher>();
-        sw.initialMode = NovaCore.PlayerModeSwitcher.PlayerMode.Spectator;
+        // Interacción sin XRI (rayo desde mandos / centro de pantalla)
+        playerGO.AddComponent<NovaCore.NovaInteractionRig>();
 
         // ── Cámara hija ────────────────────────────────────────────────
         var camGO = new GameObject("Main Camera");
