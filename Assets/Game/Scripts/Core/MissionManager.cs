@@ -8,6 +8,12 @@ public class MissionManager : MonoBehaviour
     // INSTANCIA PRINCIPAL
     public static MissionManager Instance { get; private set; }
 
+    // PERSISTENCIA ENTRE ESCENAS (módulos de la ISS en escenas separadas)
+    [Header("Persistencia")]
+    [Tooltip("Si está activo, el primer MissionManager sobrevive a los cambios de escena y los de las escenas siguientes se descartan sin error.")]
+    [SerializeField]
+    private bool persistAcrossScenes = false;
+
     // MISIONES CONFIGURADAS
     [Header("Secuencia de misiones")]
     [SerializeField]
@@ -100,6 +106,13 @@ public class MissionManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
+            if (persistAcrossScenes)
+            {
+                // Ya hay una secuencia en curso que viene de otra escena: se conserva esa.
+                Destroy(gameObject);
+                return;
+            }
+
             Debug.LogError(
                 "Ya existe un MissionManager en la escena.",
                 this
@@ -111,6 +124,12 @@ public class MissionManager : MonoBehaviour
         }
 
         Instance = this;
+
+        if (persistAcrossScenes)
+        {
+            transform.SetParent(null);
+            DontDestroyOnLoad(gameObject);
+        }
 
         currentState = MissionState.NotStarted;
         currentMissionIndex = -1;

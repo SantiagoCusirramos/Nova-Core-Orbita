@@ -208,6 +208,11 @@ namespace NovaCore
                 float d = Vector3.Distance(_cam.transform.position, target.MarkerPosition);
                 s += (s.Length > 0 ? "\n" : "") + "<color=#9FDCFF>Objetivo a " + d.ToString("0.0") + " m (rombo azul)</color>";
             }
+            else if (MissionGate.IsRunning)
+            {
+                // El objetivo está en otro módulo (otra escena)
+                s += (s.Length > 0 ? "\n" : "") + "<color=#9FDCFF>Ve a: " + MissionGate.CurrentLocation() + "</color>";
+            }
 
             promptText.text = s;
         }
@@ -218,7 +223,7 @@ namespace NovaCore
         {
             if (_cache == null || Time.unscaledTime - _cacheTime > 1f)
             {
-                _cache = FindObjectsByType<NovaInteractor>(FindObjectsSortMode.None);
+                _cache = FindObjectsByType<NovaInteractor>();
                 _cacheTime = Time.unscaledTime;
             }
             return _cache;
@@ -232,8 +237,12 @@ namespace NovaCore
             if (_marker.gameObject.activeSelf != on) _marker.gameObject.SetActive(on);
             if (!on) return;
 
+            // Más grande cuanto más lejos (en EVA el objetivo puede estar a decenas de metros)
+            float dist = Vector3.Distance(_cam.transform.position, target.MarkerPosition);
+            float size = Mathf.Max(0.09f, dist * 0.03f);
+            _marker.localScale = Vector3.one * size;
             float bob = Mathf.Sin(Time.time * 2.5f) * 0.05f;
-            _marker.position = target.MarkerPosition + Vector3.up * (0.25f + bob);
+            _marker.position = target.MarkerPosition + Vector3.up * (0.25f + size + bob);
             _marker.rotation = Quaternion.Euler(0f, Time.time * 90f, 0f) * Quaternion.Euler(45f, 0f, 45f);
         }
 

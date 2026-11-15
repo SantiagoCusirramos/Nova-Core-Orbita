@@ -16,6 +16,10 @@ namespace NovaCore
         public Material laserMaterial;
         public Material controllerMaterial;
 
+        [Header("Alcance del rayo (metros)")]
+        public float desktopRayLength = 3.0f;
+        public float vrRayLength = 4.0f;
+
         [Header("Opciones")]
         [Tooltip("Crea un mando simple visible en cada mano si no hay modelo asignado")]
         public bool createControllerVisuals = true;
@@ -38,7 +42,7 @@ namespace NovaCore
             {
                 Desktop = _cam.gameObject.AddComponent<NovaInteractor>();
                 Desktop.source = NovaInteractor.Source.Desktop;
-                Desktop.rayLength = 3.0f;
+                Desktop.rayLength = desktopRayLength;
             }
             else
             {
@@ -71,7 +75,7 @@ namespace NovaCore
         {
             var it = hand.gameObject.AddComponent<NovaInteractor>();
             it.source = src;
-            it.rayLength = 4.0f;
+            it.rayLength = vrRayLength;
             it.laserMaterial = laserMaterial;
 
             if (createControllerVisuals && hand.childCount == 0)

@@ -52,6 +52,10 @@ namespace NovaCore
             }
             _fly = FindAnyObjectByType<OrbitFreeFly>();
             if (_fly != null) _speedInitial = _fly.moveSpeed;
+
+            // Al entrar en la escena con la acción ya completada (venimos de otro módulo),
+            // dejar los objetos en su estado final sin repetir el aviso.
+            if (MissionGate.IsDone(onAction)) Apply(false);
         }
 
         private void OnDestroy()
@@ -67,14 +71,18 @@ namespace NovaCore
         private void HandleAction(MissionAction a)
         {
             if (a != onAction) return;
+            Apply(true);
+        }
 
+        private void Apply(bool showMessage)
+        {
             SetAll(enableObjects, true);
             SetAll(disableObjects, false);
             if (forceOpen != null)       foreach (var h in forceOpen)       if (h != null) h.ForceOpen();
             if (forceClosed != null)     foreach (var h in forceClosed)     if (h != null) h.ForceClosed();
             if (backToProximity != null) foreach (var h in backToProximity) if (h != null) h.SetMode(HatchDoor.Mode.Proximity);
             if (setPlayerSpeed > 0f && _fly != null) _fly.moveSpeed = setPlayerSpeed;
-            if (!string.IsNullOrEmpty(message)) MissionHUD.Feedback(message, MissionHUD.Tone.Success, 5f);
+            if (showMessage && !string.IsNullOrEmpty(message)) MissionHUD.Feedback(message, MissionHUD.Tone.Success, 5f);
         }
 
         private void HandleReset()

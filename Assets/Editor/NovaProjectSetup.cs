@@ -10,7 +10,7 @@ using UnityEngine.Rendering.Universal;
 /// Nova Core → Configurar proyecto (Quest 2 + Build Settings)
 ///
 /// Ajustes de proyecto que conviene tener antes del primer build en el visor:
-///   • Build Settings: 01_Orbit (índice 0) y 02_Interior (índice 1).
+///   • Build Settings: 01_Orbit (índice 0) y las escenas de módulos ISS (02_Nodo … 07_EVA).
 ///   • Player Settings: nombre de empresa/producto e identificador Android.
 ///   • Android: API mínima 32 (Meta Quest con firmware actual; Project Validation lo pide).
 ///   • URP móvil (Mobile_RPAsset): HDR desactivado (caro en Quest 2).
@@ -19,7 +19,6 @@ using UnityEngine.Rendering.Universal;
 public static class NovaProjectSetup
 {
     const string OrbitScene    = "Assets/NovaCore/Scenes/01_Orbit.unity";
-    const string InteriorScene = "Assets/Game/Scenes/02_Interior.unity";
     const string MobileRP      = "Assets/Settings/Mobile_RPAsset.asset";
 
     [MenuItem("Nova Core/Configurar proyecto (Quest 2 + Build Settings)")]
@@ -67,16 +66,19 @@ public static class NovaProjectSetup
         return msg;
     }
 
-    /// <summary>01_Orbit y 02_Interior en Build Settings (conserva otras escenas, desactivadas).</summary>
+    /// <summary>01_Orbit + escenas de módulos ISS en Build Settings (conserva otras, desactivadas).</summary>
     public static string RegisterScenes()
     {
+        var wanted = new List<string> { OrbitScene };
+        foreach (var n in BuildIssScenes.SceneNames) wanted.Add(BuildIssScenes.ScenePathOf(n));
+
         var scenes = new List<EditorBuildSettingsScene>();
-        if (File.Exists(OrbitScene))    scenes.Add(new EditorBuildSettingsScene(OrbitScene, true));
-        if (File.Exists(InteriorScene)) scenes.Add(new EditorBuildSettingsScene(InteriorScene, true));
+        foreach (var path in wanted)
+            if (File.Exists(path)) scenes.Add(new EditorBuildSettingsScene(path, true));
 
         foreach (var s in EditorBuildSettings.scenes)
         {
-            if (s.path == OrbitScene || s.path == InteriorScene) continue;
+            if (wanted.Contains(s.path)) continue;
             scenes.Add(new EditorBuildSettingsScene(s.path, false));
         }
         EditorBuildSettings.scenes = scenes.ToArray();

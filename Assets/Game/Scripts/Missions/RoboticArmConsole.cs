@@ -63,6 +63,16 @@ namespace NovaCore
             var m = MissionManager.Instance;
             if (m != null) m.OnMissionReset += ResetArm;
             ResetArm();
+
+            // Venimos de otra escena con el módulo ya instalado
+            if (MissionGate.IsDone(action))
+            {
+                _done = true;
+                Progress = 1f;
+                ApplyPose(1f);
+                SetSocketColor(new Color(0.2f, 1f, 0.45f));
+                UpdateScreen();
+            }
         }
 
         private void OnDestroy()

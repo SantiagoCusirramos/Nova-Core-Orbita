@@ -191,3 +191,13 @@ Lista completa y priorizada: **`TAREAS_PENDIENTES.md`** (IDs `VR-01`, `VR-02`, `
 - Decisión mantenida: **sin XRI**. La interacción es propia (`NovaInteractor`): gatillo = usar, grip = agarrar.
 - En `02_Interior` el Player SÍ lleva `CharacterController` (colisiones), pero sigue sin `VRMovement` ni `SpaceStationPlayerController`: `OrbitFreeFly` hace todo.
 - Detalle completo: `ESTADO_ACTUAL_Y_TAREAS.md` → "Sesión 5".
+
+## Actualización sesión 6 (2026-11-14) — Interiores en escenas separadas
+
+- Menú `Nova Core → BUILD Interiores ISS (5 módulos + EVA)` (sustituye al antiguo BUILD 02_Interior). Genera en `Assets/Game/Scenes/ISS/`:
+  `02_Nodo` (Unity Node 1), `03_Destiny`, `04_Zvezda`, `05_Quest`, `06_Cupula` y `07_EVA` (copia de 01_Orbit con la ISS 1:1; el panel a reparar está junto al ala `23 S4 Truss_01`).
+- Las escotillas son transiciones: al meter la cabeza en el túnel se pasa al módulo vecino (fundido a negro). En `01_Orbit` hay marcadores sobre cada módulo del modelo: apuntar + mantener = entrar.
+- `MissionManager` con `persistAcrossScenes`: la misión continúa entre escenas. Los objetos restauran su estado al entrar (`MissionGate.IsDone`). La esclusa la controla `AirlockController` según el progreso.
+- Misión 1: el repuesto se guarda en la bolsa al cogerlo en Destiny y se introduce con el botón de la compuerta en Zvezda.
+- Herramientas: se usan los `.obj` de NASA (los `.glb` venían con compresión Draco, que Nova no tiene).
+- Diagnóstico: `Nova Core → Diagnóstico → Listar partes de la ISS` (centros y tamaños de cada parte del modelo).

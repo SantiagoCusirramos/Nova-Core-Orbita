@@ -18,6 +18,8 @@ namespace NovaCore
         [Header("Spawn")]
         [Tooltip("Nombre descriptivo del punto (solo para debug/editor)")]
         public string sectorName = "Punto de observación principal";
+        [Tooltip("Identificador para llegar aquí desde otra escena (SceneTransit). Vacío = punto por defecto.")]
+        public string spawnId = "";
         [Tooltip("Transform hijo que marca la posición exacta de spawn. Si no se asigna, usa este objeto.")]
         public Transform spawnPoint;
 

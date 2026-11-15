@@ -128,6 +128,37 @@ namespace NovaCore
             ResetStation();
             var m = MissionManager.Instance;
             if (m != null && linkToMission) m.OnMissionReset += ResetStation;
+
+            // Venimos de otra escena con la reparación ya hecha
+            if (linkToMission && MissionGate.IsDone(missionAction)) ForceCompleted();
+        }
+
+        /// <summary>Deja la mesa en estado "reparada" (sin sonidos ni aviso a la misión).</summary>
+        public void ForceCompleted()
+        {
+            isTask1Complete = true;
+            isTask2Complete = true;
+            task1Progress = 1f;
+            task2Progress = 1f;
+            missionReported = true;
+            hammerStrikesCount = HammerStrikesNeeded;
+            currentChamberPressure = 1.01f;
+
+            if (weldLeftPlate != null && weldRightPlate != null)
+            {
+                weldLeftPlate.localPosition = new Vector3(-0.001f, weldLeftPlate.localPosition.y, weldLeftPlate.localPosition.z);
+                weldRightPlate.localPosition = new Vector3(0.001f, weldRightPlate.localPosition.y, weldRightPlate.localPosition.z);
+            }
+            if (precisionScrewTransform != null)
+            {
+                screwCurrentDepth = ScrewMaxDepth;
+                precisionScrewTransform.localPosition = screwInitialLocalPos + Vector3.forward * ScrewMaxDepth;
+            }
+            if (bentArmorPlateTransform != null) bentArmorPlateTransform.localRotation = Quaternion.identity;
+            if (boltTurnsRemaining != null) for (int i = 0; i < boltTurnsRemaining.Length; i++) boltTurnsRemaining[i] = 0;
+            if (foamSealantPlug != null) foamSealantPlug.localScale = new Vector3(0.18f, 0.06f, 0.18f);
+            if (pressureLeakParticles != null) pressureLeakParticles.Stop();
+            if (weldSparksParticles != null) weldSparksParticles.Stop();
         }
 
         // ── IMissionTarget ───────────────────────────────────────────────────

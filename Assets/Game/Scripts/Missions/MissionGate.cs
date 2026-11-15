@@ -97,6 +97,40 @@ namespace NovaCore
             return ok;
         }
 
+        // ── Dónde ocurre cada acción (módulos en escenas separadas) ──────────
+        /// <summary>Módulo de la ISS donde se realiza la acción (para guiar al jugador).</summary>
+        public static string LocationOf(MissionAction a)
+        {
+            switch (a)
+            {
+                case MissionAction.EmergencyActivated:          return "Nodo 1 Unity";
+                case MissionAction.EnergyModuleCollected:       return "Destiny (laboratorio)";
+                case MissionAction.EnergyModuleLoadedIntoHatch:
+                case MissionAction.RoboticConsoleActivated:
+                case MissionAction.EnergyModuleInstalled:
+                case MissionAction.RepairConfirmed:             return "Zvezda (módulo de servicio)";
+                case MissionAction.SuitEquipped:
+                case MissionAction.SuitSystemsChecked:
+                case MissionAction.EVAPreparationCompleted:
+                case MissionAction.AirlockDepressurized:
+                case MissionAction.MMUActivated:
+                case MissionAction.ReturnedToAirlock:
+                case MissionAction.AirlockRepressurized:        return "Quest (esclusa)";
+                case MissionAction.SolarPanelReached:
+                case MissionAction.SolarPanelRepaired:          return "Exterior (EVA) por la esclusa Quest";
+                case MissionAction.StationPowerVerified:        return "Cúpula";
+                default:                                        return "la estación";
+            }
+        }
+
+        /// <summary>Módulo del objetivo actual (o vacío si no hay misión en curso).</summary>
+        public static string CurrentLocation()
+        {
+            if (!IsRunning) return "";
+            var o = Manager.CurrentMissionObjective;
+            return o == null ? "" : LocationOf(o.RequiredAction);
+        }
+
         // ── Registro de objetivos en escena ──────────────────────────────────
         public static void Register(IMissionTarget t)   { if (t != null && !_targets.Contains(t)) _targets.Add(t); }
         public static void Unregister(IMissionTarget t) { _targets.Remove(t); }

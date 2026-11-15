@@ -22,6 +22,10 @@ namespace NovaCore
         [Tooltip("Si está activo, no deja agarrarlo hasta que su objetivo (o uno posterior) esté activo")]
         public bool lockUntilObjective = true;
 
+        [Tooltip("Al agarrarlo se guarda en la bolsa del astronauta (desaparece). Útil cuando el destino está en otra escena.")]
+        public bool stowOnGrab = false;
+        [TextArea] public string stowMessage = "Guardado en tu bolsa de transporte.";
+
         [Header("Sujeción")]
         public Vector3 holdOffset = new Vector3(0f, 0f, 0.12f);
         public Vector3 holdEuler = Vector3.zero;
@@ -77,6 +81,10 @@ namespace NovaCore
         {
             var m = MissionManager.Instance;
             if (m != null) m.OnMissionReset += ResetPickup;
+
+            // Si ya se recogió (venimos de otra escena), no debe estar aquí
+            if (stowOnGrab && completeOnGrab && MissionGate.IsDone(grabAction))
+                gameObject.SetActive(false);
         }
 
         private void OnDestroy()
@@ -110,8 +118,17 @@ namespace NovaCore
         public override void OnGrab(NovaInteractor interactor)
         {
             SetCollidersEnabled(false);
+            bool done = false;
             if (completeOnGrab && MissionGate.IsCurrent(grabAction))
-                MissionGate.TryComplete(grabAction);
+                done = MissionGate.TryComplete(grabAction);
+
+            if (stowOnGrab && done)
+            {
+                interactor.ForceRelease();
+                transform.SetParent(_startParent, false);
+                gameObject.SetActive(false);
+                if (!string.IsNullOrEmpty(stowMessage)) MissionHUD.Feedback(stowMessage, MissionHUD.Tone.Success, 4f);
+            }
         }
 
         public override void OnRelease(NovaInteractor interactor)
@@ -135,6 +152,7 @@ namespace NovaCore
         public void ResetPickup()
         {
             if (Holder != null) Holder.ForceRelease();
+            if (!gameObject.activeSelf) gameObject.SetActive(true);
             IsSocketed = false;
             transform.SetParent(_startParent, false);
             transform.localPosition = _startPos;

@@ -10,7 +10,10 @@ namespace NovaCore
     public class SceneTeleporter : NovaInteractable
     {
         [Tooltip("Nombre de la escena destino (sin .unity)")]
-        public string sceneName = "02_Interior";
+        public string sceneName = "02_Nodo";
+
+        [Tooltip("Punto de llegada en la escena destino (PlayerSpawnBay.spawnId). Vacío = por defecto.")]
+        public string spawnId = "";
 
         [Tooltip("Mantener pulsado este tiempo para viajar (evita viajes accidentales)")]
         public float holdSeconds = 1.0f;
@@ -37,7 +40,7 @@ namespace NovaCore
             }
 
             _loading = true;
-            SceneManager.LoadScene(sceneName);
+            SceneTransit.Go(sceneName, spawnId);
         }
 
         public override void OnUseReleased(NovaInteractor interactor) { _hold = 0f; }
