@@ -131,6 +131,51 @@ namespace NovaCore
             return o == null ? "" : LocationOf(o.RequiredAction);
         }
 
+        // ── Escenas y ruta entre módulos ─────────────────────────────────────
+        public const string SceneOrbit = "01_Orbit", SceneNodo = "02_Nodo", SceneDestiny = "03_Destiny",
+                            SceneZvezda = "04_Zvezda", SceneQuest = "05_Quest", SceneCupula = "06_Cupula",
+                            SceneEva = "07_EVA", SceneTutorial = "00_Tutorial";
+
+        /// <summary>Escena donde se realiza la acción.</summary>
+        public static string SceneOf(MissionAction a)
+        {
+            switch (a)
+            {
+                case MissionAction.EmergencyActivated:          return SceneNodo;
+                case MissionAction.EnergyModuleCollected:       return SceneDestiny;
+                case MissionAction.EnergyModuleLoadedIntoHatch:
+                case MissionAction.RoboticConsoleActivated:
+                case MissionAction.EnergyModuleInstalled:
+                case MissionAction.RepairConfirmed:             return SceneZvezda;
+                case MissionAction.SolarPanelReached:
+                case MissionAction.SolarPanelRepaired:          return SceneEva;
+                case MissionAction.StationPowerVerified:        return SceneCupula;
+                default:                                        return SceneQuest;
+            }
+        }
+
+        /// <summary>Escena del objetivo actual. Sin misión en curso: el Nodo (botón INICIAR).</summary>
+        public static string CurrentTargetScene()
+        {
+            if (!IsRunning) return SceneNodo;
+            var o = Manager.CurrentMissionObjective;
+            return o == null ? SceneNodo : SceneOf(o.RequiredAction);
+        }
+
+        /// <summary>
+        /// Siguiente escena en el camino de 'from' a 'to'. El Nodo es el centro: todos los
+        /// módulos conectan con él, y el exterior (EVA) solo con la esclusa Quest.
+        /// Desde la vista exterior (01_Orbit) se entra directo al módulo.
+        /// </summary>
+        public static string NextHop(string from, string to)
+        {
+            if (from == to) return to;
+            if (from == SceneOrbit) return to == SceneEva ? SceneQuest : to;
+            if (from == SceneEva) return SceneQuest;
+            if (to == SceneEva) return from == SceneQuest ? SceneEva : (from == SceneNodo ? SceneQuest : SceneNodo);
+            return from == SceneNodo ? to : SceneNodo;
+        }
+
         // ── Registro de objetivos en escena ──────────────────────────────────
         public static void Register(IMissionTarget t)   { if (t != null && !_targets.Contains(t)) _targets.Add(t); }
         public static void Unregister(IMissionTarget t) { _targets.Remove(t); }

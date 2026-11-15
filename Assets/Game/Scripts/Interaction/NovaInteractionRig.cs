@@ -7,7 +7,7 @@ namespace NovaCore
     ///   - Escritorio: uno en la cámara (rayo desde el centro de la pantalla + mira).
     ///   - VR: uno en cada mando, cuando XRPlayerRig termina de construir el rig.
     /// Cambia solo entre uno y otro según haya visor activo o no.
-    /// También pone un modelo sencillo de mando si XRPlayerRig no tiene prefabs asignados.
+    /// También pone manos con guante (o un mando simple) si XRPlayerRig no tiene prefabs asignados.
     /// </summary>
     [DisallowMultipleComponent]
     public class NovaInteractionRig : MonoBehaviour
@@ -24,6 +24,8 @@ namespace NovaCore
         [Tooltip("Crea un mando simple visible en cada mano si no hay modelo asignado")]
         public bool createControllerVisuals = true;
         public bool showDesktopCrosshair = true;
+        [Tooltip("Muestra manos con guante en lugar de mandos (los dedos siguen al gatillo y al grip)")]
+        public bool showHands = true;
 
         public NovaInteractor Desktop { get; private set; }
         public NovaInteractor Left    { get; private set; }
@@ -79,7 +81,10 @@ namespace NovaCore
             it.laserMaterial = laserMaterial;
 
             if (createControllerVisuals && hand.childCount == 0)
-                CreateControllerVisual(hand, src == NovaInteractor.Source.LeftHand);
+            {
+                if (showHands) NovaHandVisual.Create(hand, src == NovaInteractor.Source.LeftHand, controllerMaterial);
+                else CreateControllerVisual(hand, src == NovaInteractor.Source.LeftHand);
+            }
 
             return it;
         }

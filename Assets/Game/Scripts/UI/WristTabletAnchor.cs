@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.XR;
 
 /// <summary>
 /// Ancla la tablet a la muneca y la muestra solo cuando Eva la mira (levanta el brazo).
@@ -15,8 +17,28 @@ public class WristTabletAnchor : MonoBehaviour
     [Range(0f, 1f)] [SerializeField] private float showThreshold = 0.55f;
     [SerializeField] private GameObject visual;                    // contenido a mostrar/ocultar (hijo del canvas)
 
+    [Header("Sin visor (escritorio)")]
+    [Tooltip("Tecla para mostrar/ocultar la tablet delante de la camara cuando no hay visor")]
+    [SerializeField] private Key desktopToggleKey = Key.Tab;
+    [SerializeField] private Vector3 desktopOffset = new Vector3(-0.16f, -0.08f, 0.7f);
+
+    [Header("Tamano (escala del Canvas de 1600x1000 px)")]
+    [Tooltip("En la muneca: 0.00016 = unos 26 cm de ancho")]
+    [SerializeField] private float wristScale = 0.00016f;
+    [Tooltip("En escritorio: 0.0003 = unos 48 cm a 70 cm de la camara")]
+    [SerializeField] private float desktopScale = 0.0003f;
+
+    private bool _desktopShown;
+    private bool _xWasPressed;
+    private MissionTabletUI _ui;
+
+    private void Awake() { _ui = GetComponent<MissionTabletUI>(); }
+
     private void LateUpdate()
     {
+        if (!XRSettings.isDeviceActive) { DesktopUpdate(); return; }
+        if (wristScale > 0f) transform.localScale = Vector3.one * wristScale;
+
         if (hand == null)
         {
             GameObject h = GameObject.Find("Left Hand");
@@ -32,5 +54,36 @@ public class WristTabletAnchor : MonoBehaviour
         Vector3 toHead = (head.position - transform.position).normalized;
         bool facing = Vector3.Dot(-transform.forward, toHead) > showThreshold;   // cara visible de un Canvas = -forward
         if (visual != null && visual.activeSelf != facing) visual.SetActive(facing);
+
+        // Boton X del mando izquierdo: siguiente pestana (solo con la tablet a la vista)
+        bool x = false;
+        var dev = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
+        if (dev.isValid) dev.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primaryButton, out x);
+        if (x && !_xWasPressed && facing && _ui != null) _ui.NextTab();
+        _xWasPressed = x;
+    }
+
+    /// <summary>Sin visor: Tab muestra la tablet abajo a la izquierda; con la tablet abierta, Tab de nuevo la cierra y 1/2/3 cambian de pestana.</summary>
+    private void DesktopUpdate()
+    {
+        if (head == null && Camera.main != null) head = Camera.main.transform;
+        var kb = Keyboard.current;
+        if (kb != null)
+        {
+            if (kb[desktopToggleKey].wasPressedThisFrame) _desktopShown = !_desktopShown;
+            if (_desktopShown && _ui != null)
+            {
+                if (kb.digit1Key.wasPressedThisFrame) _ui.ShowTab(0);
+                if (kb.digit2Key.wasPressedThisFrame) _ui.ShowTab(1);
+                if (kb.digit3Key.wasPressedThisFrame) _ui.ShowTab(2);
+            }
+        }
+        if (visual != null && visual.activeSelf != _desktopShown) visual.SetActive(_desktopShown);
+        if (!_desktopShown || head == null) return;
+        if (desktopScale > 0f) transform.localScale = Vector3.one * desktopScale;
+
+        // Canvas: la cara visible es -forward, por eso mira en la misma direccion que la camara
+        transform.SetPositionAndRotation(head.TransformPoint(desktopOffset),
+                                         Quaternion.LookRotation(head.forward, head.up));
     }
 }

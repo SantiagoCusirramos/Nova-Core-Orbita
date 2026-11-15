@@ -201,3 +201,16 @@ Lista completa y priorizada: **`TAREAS_PENDIENTES.md`** (IDs `VR-01`, `VR-02`, `
 - Misión 1: el repuesto se guarda en la bolsa al cogerlo en Destiny y se introduce con el botón de la compuerta en Zvezda.
 - Herramientas: se usan los `.obj` de NASA (los `.glb` venían con compresión Draco, que Nova no tiene).
 - Diagnóstico: `Nova Core → Diagnóstico → Listar partes de la ISS` (centros y tamaños de cada parte del modelo).
+
+## Sesión 7 (2026-11-15) — feedback de mentores + integración de Camila
+- Recursos: `Astronaut.glb` convertido sin Draco/WebP → `Assets/Game/Art/Characters/Astronaut.glb` (traje en Quest, compañero en EVA, astronauta en 01_Orbit). Luna (foto Apollo 11) → `Assets/Game/Art/Exterior/T_Moon_Disc.png` (cartel lejano con FaceCamera en Cúpula, EVA y 01_Orbit).
+- Tablet de Camila: en la muñeca izquierda de todas las escenas (TMP Essentials importado). StationTelemetry y MissionScore viven en el MissionManager persistente. VR: X cambia pestaña. Escritorio: Tab abre, 1/2/3 pestañas.
+- Movimiento (OrbitFreeFly.mode): Walk en interiores (altura fija, 1.4 m/s), Thrusters en EVA (inercia; A sube, B baja, clic stick izq. estabiliza; escritorio Espacio/Ctrl/X), FreeFly en 01_Orbit.
+- Guía: ObjectiveGuide (flechas azules animadas + flecha 3D con distancia; ruta por escotillas; Y/G a demanda; pista automática a los 25 s).
+- Manos con guante (NovaHandVisual) en lugar de mandos; dedos siguen gatillo/grip.
+- Escotillas entre módulos se abren con el mando (HatchHandle, mantener gatillo).
+- Chispas en lugar de luces parpadeantes (AlarmLights).
+- Texturas: UVs en metros (TiledCube) para paredes/suelo/racks.
+- Gamificación: MissionScore (puntos, bonus por rapidez, rango S/A/B/C) + 5 insignias escondidas (MissionPatch).
+- 00_Tutorial: sala cerrada con 5 pasos (moverse, agarrar, usar, guía/tablet, escotilla) + info EVA + taladro de práctica. Es la primera escena de Build Settings. Al salir, GameIntroManager en el Nodo inicia la misión sola (documento §2.2).
+- Verificado en Unity: compila sin errores, BUILD sin avisos, Play en 02_Nodo y 00_Tutorial (paso 1 completado). Sin probar en visor.

@@ -31,7 +31,8 @@ public static class BuildIssScenes
 {
     public const string SceneDir = "Assets/Game/Scenes/ISS";
     public const string SNodo = "02_Nodo", SDestiny = "03_Destiny", SZvezda = "04_Zvezda",
-                        SQuest = "05_Quest", SCupula = "06_Cupula", SEva = "07_EVA";
+                        SQuest = "05_Quest", SCupula = "06_Cupula", SEva = "07_EVA",
+                        STutorial = "00_Tutorial";
     public static readonly string[] SceneNames = { SNodo, SDestiny, SZvezda, SQuest, SCupula, SEva };
     public static string ScenePathOf(string name) => SceneDir + "/" + name + ".unity";
 
@@ -44,6 +45,9 @@ public static class BuildIssScenes
     const string SkyboxMat   = "Assets/NovaCore/Art/Materials/M_Skybox_DeepSpace.mat";
     const string MissionEnergy = "Assets/Game/Data/Missions/Mission_Energy.asset";
     const string MissionSolar  = "Assets/Game/Data/Missions/Mission_SolarPanel.asset";
+    const string AstronautModel = "Assets/Game/Art/Characters/Astronaut.glb";
+    const string MoonTexture    = "Assets/Game/Art/Exterior/T_Moon_Disc.png";
+    const string TabletPrefab   = "Assets/Game/Prefabs/UI/MissionTablet.prefab";
 
     // Dimensiones comunes (metros)
     const float H      = 2.4f;   // altura interior de módulo
@@ -55,7 +59,8 @@ public static class BuildIssScenes
     static Material mWall, mFloor, mRack, mRackDark, mPanel, mHandrail, mMetal, mHull, mHullGold,
                     mLight, mScreen, mRed, mGreen, mAmber, mCyan, mCable, mBag, mGlass, mSolar,
                     mEarth, mAlarm, mOru, mPlant, mPlantLight, mSuit, mVisor, mBlackPanel,
-                    mParticleAdd, mParticleMist, mLaser, mMarker, mController, mFrame, mFade;
+                    mParticleAdd, mParticleMist, mLaser, mMarker, mController, mFrame, mFade,
+                    mGlove, mGuide, mMoon, mGold;
     static Material mToolPGT, mToolHammer, mToolRatchet, mToolGrease;
 
     static System.Random rng = new System.Random(1);
@@ -82,6 +87,7 @@ public static class BuildIssScenes
         CreateMaterials();
 
         BuildEva();          // primero: se copia de 01_Orbit antes de añadirle marcadores
+        BuildTutorial();
         BuildNodo();
         BuildDestiny();
         BuildZvezda();
@@ -90,11 +96,13 @@ public static class BuildIssScenes
         AddMarkersToOrbit();
 
         report.Add(NovaProjectSetup.RegisterScenes());
+        if (!AssetDatabase.IsValidFolder("Assets/TextMesh Pro"))
+            report.Add("AVISO: la tablet de Camila usa TextMeshPro. Ejecuta 'Nova Core > Importar TMP Essentials' (una vez) para que se vean sus textos.");
         EditorSceneManager.OpenScene(ScenePathOf(SNodo), OpenSceneMode.Single);
         AssetDatabase.SaveAssets();
 
         string msg = "Interiores ISS construidos.\n\n" + string.Join("\n", report) +
-                     "\n\nPrueba: Play en 01_Orbit → apunta a un módulo y mantén, o Play en 02_Nodo → INICIAR.";
+                     "\n\nPrueba: Play en 00_Tutorial (entrenamiento) → escotilla → Nodo → INICIAR.";
         Debug.Log("[BuildIssScenes]\n" + msg);
         return msg;
     }
@@ -121,6 +129,15 @@ public static class BuildIssScenes
     {
         SetNormalMap(TexDir + "/T_Interior_Floor_Normal.png");
         SetNormalMap(TexDir + "/T_Interior_Wall_Normal.png");
+        var moon = AssetImporter.GetAtPath(MoonTexture) as TextureImporter;
+        if (moon != null && (!moon.alphaIsTransparency || moon.wrapMode != TextureWrapMode.Clamp || moon.maxTextureSize != 1024))
+        {
+            moon.alphaIsTransparency = true;
+            moon.wrapMode = TextureWrapMode.Clamp;
+            moon.maxTextureSize = 1024;
+            moon.mipmapEnabled = true;
+            moon.SaveAndReimport();
+        }
         var earth = AssetImporter.GetAtPath(TexDir + "/T_Planet_Earth_Albedo.png") as TextureImporter;
         if (earth != null && earth.maxTextureSize != 2048)
         {
@@ -144,8 +161,8 @@ public static class BuildIssScenes
         var wallA = Tex("T_Interior_Wall_Albedo.png");  var wallN = Tex("T_Interior_Wall_Normal.png");
         var floorA = Tex("T_Interior_Floor_Albedo.png"); var floorN = Tex("T_Interior_Floor_Normal.png");
 
-        mWall      = Lit("M_ISS_Wall",       new Color(0.86f, 0.85f, 0.80f), 0.35f, 0f, wallA, wallN, new Vector2(2, 1));
-        mFloor     = Lit("M_ISS_Deck",       new Color(0.72f, 0.72f, 0.70f), 0.30f, 0.1f, floorA, floorN, new Vector2(2, 2));
+        mWall      = Lit("M_ISS_Wall",       new Color(0.86f, 0.85f, 0.80f), 0.35f, 0f, wallA, wallN, Vector2.one);
+        mFloor     = Lit("M_ISS_Deck",       new Color(0.72f, 0.72f, 0.70f), 0.30f, 0.1f, floorA, floorN, Vector2.one);
         mRack      = Lit("M_ISS_Rack",       new Color(0.90f, 0.89f, 0.84f), 0.30f, 0f, wallA, null, Vector2.one);
         mRackDark  = Lit("M_ISS_RackDark",   new Color(0.55f, 0.56f, 0.56f), 0.40f, 0.2f);
         mPanel     = Lit("M_ISS_Panel",      new Color(0.78f, 0.80f, 0.82f), 0.45f, 0.1f);
@@ -172,6 +189,16 @@ public static class BuildIssScenes
         mPlantLight= Lit("M_ISS_VeggieLight",new Color(0.9f, 0.3f, 0.8f), 0.4f, 0f, null, null, Vector2.one, new Color(1f, 0.25f, 0.85f) * 1.5f);
         mMarker    = Lit("M_ISS_ObjectiveMarker", new Color(0.2f, 0.7f, 1f), 0.5f, 0f, null, null, Vector2.one, new Color(0.2f, 0.75f, 1f) * 3f);
         mController= Lit("M_ISS_Controller", new Color(0.12f, 0.12f, 0.14f), 0.6f, 0.2f);
+        mGlove     = Lit("M_ISS_Glove",      new Color(0.93f, 0.93f, 0.90f), 0.25f, 0f);
+        mGold      = Lit("M_ISS_PatchGold",  new Color(1f, 0.78f, 0.25f), 0.8f, 0.9f, null, null, Vector2.one, new Color(0.6f, 0.4f, 0.05f));
+        var sprite = Shader.Find("Sprites/Default");
+        if (sprite != null)
+        {
+            mGuide = LoadOrCreate("M_ISS_Guide", sprite, MatDir);
+            mMoon  = LoadOrCreate("M_Moon_Disc", sprite, MatDir);
+            var moonTex = AssetDatabase.LoadAssetAtPath<Texture2D>(MoonTexture);
+            if (moonTex != null) { mMoon.mainTexture = moonTex; EditorUtility.SetDirty(mMoon); }
+        }
 
         var solarA = Tex("T_Solar_Panel_Albedo.png");
         mSolar     = Lit("M_ISS_SolarArray", new Color(0.35f, 0.42f, 0.75f), 0.85f, 0.3f, solarA, null, new Vector2(12, 4));
@@ -376,6 +403,10 @@ public static class BuildIssScenes
         if (!collider) Object.DestroyImmediate(go.GetComponent<Collider>());
         var r = go.GetComponent<Renderer>();
         if (mat != null) r.sharedMaterial = mat;
+
+        // Paredes y suelo: UVs en metros para que la textura no se estire en módulos largos
+        if (type == PrimitiveType.Cube && mat != null && (mat == mWall || mat == mFloor || mat == mRack))
+            go.GetComponent<MeshFilter>().sharedMesh = TiledCube(scale, mat == mFloor ? 1.0f : 1.2f);
         r.shadowCastingMode = castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
         if (isStatic) GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic);
         return go;
@@ -858,6 +889,46 @@ public static class BuildIssScenes
         }
     }
 
+    /// <summary>
+    /// Cubo unidad con UVs proporcionales al tamaño real de cada cara (1 repetición cada
+    /// 'tile' metros). Se guarda como asset y se reutiliza para tamaños iguales.
+    /// </summary>
+    static Mesh TiledCube(Vector3 size, float tile)
+    {
+        Vector3 a = new Vector3(Mathf.Abs(size.x), Mathf.Abs(size.y), Mathf.Abs(size.z));
+        string key = string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                                   "TiledCube_{0:0.00}x{1:0.00}x{2:0.00}_t{3:0.0}", a.x, a.y, a.z, tile);
+        return SaveMesh(key, () =>
+        {
+            var v = new List<Vector3>(); var n = new List<Vector3>(); var uv = new List<Vector2>(); var tri = new List<int>();
+            TiledFace(v, n, uv, tri, tile, Vector3.forward, Vector3.left,    Vector3.up,      a.x, a.y);
+            TiledFace(v, n, uv, tri, tile, Vector3.back,    Vector3.right,   Vector3.up,      a.x, a.y);
+            TiledFace(v, n, uv, tri, tile, Vector3.right,   Vector3.forward, Vector3.up,      a.z, a.y);
+            TiledFace(v, n, uv, tri, tile, Vector3.left,    Vector3.back,    Vector3.up,      a.z, a.y);
+            TiledFace(v, n, uv, tri, tile, Vector3.up,      Vector3.right,   Vector3.forward, a.x, a.z);
+            TiledFace(v, n, uv, tri, tile, Vector3.down,    Vector3.right,   Vector3.back,    a.x, a.z);
+            var m = new Mesh { name = key };
+            m.SetVertices(v); m.SetNormals(n); m.SetUVs(0, uv); m.SetTriangles(tri, 0);
+            m.RecalculateTangents();
+            m.RecalculateBounds();
+            return m;
+        });
+    }
+
+    // Una cara del cubo: (normal, eje u, eje v, tamaño u, tamaño v). Sin funciones locales (compila también en mcs).
+    static void TiledFace(List<Vector3> v, List<Vector3> n, List<Vector2> uv, List<int> tri, float tile,
+                          Vector3 nn, Vector3 u, Vector3 w, float su, float sv)
+    {
+        int i0 = v.Count;
+        Vector3 c = nn * 0.5f;
+        v.Add(c - u * 0.5f - w * 0.5f); v.Add(c + u * 0.5f - w * 0.5f);
+        v.Add(c + u * 0.5f + w * 0.5f); v.Add(c - u * 0.5f + w * 0.5f);
+        for (int k = 0; k < 4; k++) n.Add(nn);
+        float U = Mathf.Max(0.01f, su / tile), V = Mathf.Max(0.01f, sv / tile);
+        uv.Add(new Vector2(0, 0)); uv.Add(new Vector2(U, 0)); uv.Add(new Vector2(U, V)); uv.Add(new Vector2(0, V));
+        tri.Add(i0); tri.Add(i0 + 2); tri.Add(i0 + 1); tri.Add(i0); tri.Add(i0 + 3); tri.Add(i0 + 2);
+    }
+
     static Mesh SaveMesh(string name, System.Func<Mesh> factory)
     {
         string path = MeshDir + "/" + name + ".asset";
@@ -1080,6 +1151,46 @@ public static class BuildIssScenes
         return rs;
     }
 
+    /// <summary>Emisor de chispas por ráfagas (sin emisión continua; lo dispara AlarmLights).</summary>
+    static ParticleSystem SparkBurst(Transform parent, Vector3 worldPos, Vector3 dir)
+    {
+        var go = new GameObject("Chispas");
+        go.transform.SetParent(parent, false);
+        go.transform.position = worldPos;
+        go.transform.rotation = Quaternion.LookRotation((dir + Vector3.down * 0.6f).normalized, Vector3.up);
+        var ps = go.AddComponent<ParticleSystem>();
+        var main = ps.main;
+        main.playOnAwake = true;
+        main.loop = true;
+        main.startLifetime = new ParticleSystem.MinMaxCurve(0.25f, 0.8f);
+        main.startSpeed = new ParticleSystem.MinMaxCurve(1.2f, 3.5f);
+        main.startSize = new ParticleSystem.MinMaxCurve(0.006f, 0.018f);
+        main.startColor = new ParticleSystem.MinMaxGradient(new Color(1f, 0.95f, 0.6f), new Color(1f, 0.55f, 0.15f));
+        main.gravityModifier = 0.6f;
+        main.maxParticles = 120;
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        var em = ps.emission;
+        em.rateOverTime = 0f;
+        var sh = ps.shape;
+        sh.shapeType = ParticleSystemShapeType.Cone;
+        sh.angle = 35f;
+        sh.radius = 0.02f;
+        var col = ps.colorOverLifetime;
+        col.enabled = true;
+        var g = new Gradient();
+        g.SetKeys(new[] { new GradientColorKey(new Color(1f, 0.9f, 0.6f), 0f), new GradientColorKey(new Color(1f, 0.35f, 0.05f), 1f) },
+                  new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0f, 1f) });
+        col.color = g;
+        var r = go.GetComponent<ParticleSystemRenderer>();
+        r.sharedMaterial = mParticleAdd;
+        r.renderMode = ParticleSystemRenderMode.Stretch;
+        r.velocityScale = 0.04f;
+        r.lengthScale = 1.5f;
+        r.shadowCastingMode = ShadowCastingMode.Off;
+        r.receiveShadows = false;
+        return ps;
+    }
+
     static ParticleSystem Sparks(Transform parent, Vector3 localPos, Material mat, bool playOnAwake)
     {
         var go = new GameObject("Partículas");
@@ -1298,6 +1409,11 @@ public static class BuildIssScenes
         so.ApplyModifiedPropertiesWithoutUndo();
         if (e == null || s == null) report.Add("AVISO: falta algún asset de misión en Assets/Game/Data/Missions.");
 
+        // Telemetría de la tablet de Camila (reloj, energía, mensajes de Control) y puntuación:
+        // viven en el objeto persistente para no reiniciarse al cambiar de módulo.
+        AddTelemetry(mmGO, e, s);
+        mmGO.AddComponent<MissionScore>();
+
         var sys = new GameObject("Mission Systems");
         c.systems = sys.transform;
         var tester = sys.AddComponent<MissionDebugTester>();
@@ -1309,8 +1425,63 @@ public static class BuildIssScenes
         hudGO.transform.SetParent(sys.transform, false);
         hudGO.AddComponent<MissionHUD>().markerMaterial = mMarker;
 
+        var guideGO = new GameObject("Guía al objetivo");
+        guideGO.transform.SetParent(sys.transform, false);
+        guideGO.AddComponent<ObjectiveGuide>().guideMaterial = mGuide;
+
         c.reactions = new GameObject("Mission Reactions").transform;
         c.reactions.SetParent(sys.transform, false);
+    }
+
+    static void AddTelemetry(GameObject mmGO, MissionDefinition energy, MissionDefinition solar)
+    {
+        var tel = mmGO.AddComponent<StationTelemetry>();
+        var so = new SerializedObject(tel);
+        var list = so.FindProperty("missions");
+        var defs = new List<MissionDefinition>();
+        if (energy != null) defs.Add(energy);
+        if (solar != null) defs.Add(solar);
+        list.arraySize = defs.Count;
+        for (int i = 0; i < defs.Count; i++) list.GetArrayElementAtIndex(i).objectReferenceValue = defs[i];
+
+        // Mensajes del Centro de Control por objetivo (los mismos que propuso Camila, ampliados)
+        var msgs = new (string id, string text)[] {
+            ("energy_01", "Eva, aquí Control. Falla en la distribución eléctrica. Activa el protocolo de emergencia en el Nodo."),
+            ("energy_02", "Protocolo activo. El módulo energético de repuesto está en Destiny."),
+            ("energy_03", "Módulo en tu bolsa. Llévalo a la compuerta de mantenimiento de Zvezda."),
+            ("energy_04", "Repuesto recibido. Activa la consola de control robótico."),
+            ("energy_05", "Consola lista. Sustituye el módulo averiado con el brazo robótico."),
+            ("energy_06", "Instalación detectada. Confirma el diagnóstico de reparación."),
+            ("solar_01", "Nueva alerta: daño en el panel solar. Ve a la esclusa Quest y equípate el traje."),
+            ("solar_04", "Traje verificado. Despresuriza la esclusa."),
+            ("solar_05", "Activa la mochila de propulsión. Fuera usarás los propulsores: A sube, B baja."),
+            ("solar_06", "Escotilla abierta. Vuela hasta el panel dañado siguiendo las flechas."),
+            ("solar_07", "Estás junto al panel. Procede con la reparación."),
+            ("solar_08", "Panel reparado. Regresa a la esclusa."),
+            ("solar_10", "Confirma desde la Cúpula que la energía quedó estabilizada."),
+        };
+        var mp = so.FindProperty("messagesByObjective");
+        mp.arraySize = msgs.Length;
+        for (int i = 0; i < msgs.Length; i++)
+        {
+            var el = mp.GetArrayElementAtIndex(i);
+            el.FindPropertyRelative("objectiveId").stringValue = msgs[i].id;
+            el.FindPropertyRelative("text").stringValue = msgs[i].text;
+        }
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    /// <summary>Tablet de misión de Camila en la muñeca izquierda (sin su telemetría propia: usa la persistente).</summary>
+    static void AddTablet(Transform player)
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(TabletPrefab);
+        if (prefab == null) { report.Add("AVISO: no existe " + TabletPrefab + " (usa Nova Core > Crear Tablet de Mision)."); return; }
+        var t = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+        if (t == null) return;
+        PrefabUtility.UnpackPrefabInstance(t, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+        t.name = "Tablet de Misión (muñeca)";
+        t.transform.SetParent(player, false);
+        foreach (var tel in t.GetComponentsInChildren<StationTelemetry>(true)) Object.DestroyImmediate(tel.gameObject);
     }
 
     /// <summary>Player (cámara, colisiones, VR, interacción, llegada por escotilla y fundido).</summary>
@@ -1361,18 +1532,21 @@ public static class BuildIssScenes
         acd.renderShadows = true;
         AddFader(camGO.transform);
 
+        // Interiores: se camina como con gravedad (feedback: moverse "normal" dentro de la nave)
         var fly = player.AddComponent<OrbitFreeFly>();
+        fly.mode = OrbitFreeFly.MoveMode.Walk;
         fly.moveSpeed = speed;
-        fly.sprintMultiplier = 2.2f;
-        fly.speedRange = new Vector2(0.6f, speed * 3f);
-        fly.smoothing = 6f;
+        fly.sprintMultiplier = 1.8f;
+        fly.speedRange = new Vector2(0.6f, speed * 2.5f);
+        fly.smoothing = 8f;
         fly.playerCamera = cam;
 
         player.AddComponent<XRPlayerRig>();
         var rig = player.AddComponent<NovaInteractionRig>();
         rig.laserMaterial = mLaser;
-        rig.controllerMaterial = mController;
+        rig.controllerMaterial = mGlove;   // manos con guante en vez de mandos
         player.AddComponent<SceneEntry>();
+        AddTablet(player.transform);
 
         c.player = player.transform;
 
@@ -1403,6 +1577,23 @@ public static class BuildIssScenes
         alarm.alarmRenderers = alarmStrips.ToArray();
         alarm.alarmLights = new[] { PointLight(c.systems, "Alarm Light", new Vector3(0f, 2.1f, 0f) + c.root.position, 7f, 0f, Color.red) };
 
+        // Chispas en paneles dañados (sustituyen al parpadeo de las luces)
+        var sparks = new List<ParticleSystem>();
+        var sparkRoot = new GameObject("Chispas (paneles dañados)").transform;
+        sparkRoot.SetParent(c.root, false);
+        for (int i = 0; i < alarmStrips.Count && sparks.Count < 3; i += Mathf.Max(1, alarmStrips.Count / 3))
+        {
+            var strip = alarmStrips[i];
+            if (strip == null) continue;
+            Vector3 pos = strip.bounds.center + Vector3.down * 0.06f;
+            Vector3 inward = Vector3.ProjectOnPlane(c.root.position - pos, Vector3.up);
+            if (inward.sqrMagnitude < 0.01f) inward = Vector3.forward;
+            var panel = Box("Panel dañado", sparkRoot, pos + Vector3.down * 0.06f, new Vector3(0.22f, 0.14f, 0.22f), mRackDark, false, false);
+            panel.transform.rotation = Quaternion.LookRotation(inward.normalized, Vector3.up);
+            sparks.Add(SparkBurst(sparkRoot, pos, inward.normalized));
+        }
+        alarm.sparks = sparks.ToArray();
+
         EditorSceneManager.MarkSceneDirty(c.scene);
         EditorSceneManager.SaveScene(c.scene, ScenePathOf(c.name));
         report.Add("Escena: " + c.name);
@@ -1428,15 +1619,27 @@ public static class BuildIssScenes
 
         // Escotilla cerrada (decorativa) al fondo del túnel
         var door = new GameObject("Escotilla → " + destName).transform;
+        Transform doorLeaf;
         door.SetParent(c.root, false);
         door.position = hatchCenter + n * (1.0f + WallT - 0.04f);
         door.rotation = Quaternion.LookRotation(-n, Vector3.up);
-        Box("Hoja", door, Vector3.zero, new Vector3(1.3f, 1.5f, 0.05f), mPanel, true, false, true);
-        Box("Manivela", door, new Vector3(0f, -0.2f, 0.04f), new Vector3(0.4f, 0.05f, 0.05f), mMetal, false, false);
-        Box("Luz", door, new Vector3(0.5f, 0.6f, 0.03f), new Vector3(0.07f, 0.07f, 0.02f),
+        // La hoja se abre con el mando (HatchHandle); el marco con el rótulo se queda
+        doorLeaf = new GameObject("Hoja móvil").transform;
+        doorLeaf.SetParent(door, false);
+        var leaf = Box("Hoja", doorLeaf, Vector3.zero, new Vector3(1.3f, 1.5f, 0.05f), mPanel, true, false, true);
+        var handle = Box("Manivela", doorLeaf, new Vector3(0f, -0.2f, 0.04f), new Vector3(0.4f, 0.05f, 0.05f), mMetal, false, false);
+        Box("Luz", doorLeaf, new Vector3(0.5f, 0.6f, 0.03f), new Vector3(0.07f, 0.07f, 0.02f),
             cond == HatchTransition.Condition.Always ? mGreen : mAmber, false, false);
-        NovaText.CreateFacing(door, "Destino", "→ " + destName.ToUpper(), new Vector3(0f, 0.3f, 0.03f),
+        NovaText.CreateFacing(doorLeaf, "Destino", "→ " + destName.ToUpper(), new Vector3(0f, 0.3f, 0.03f),
                               new Vector2(1.2f, 0.12f), 70, new Color(0.15f, 0.2f, 0.3f));
+        NovaText.CreateFacing(doorLeaf, "Instrucción", "MANTÉN EL GATILLO PARA ABRIR", new Vector3(0f, -0.42f, 0.03f),
+                              new Vector2(1.2f, 0.08f), 40, new Color(0.15f, 0.2f, 0.3f));
+        var hh = door.gameObject.AddComponent<HatchHandle>();
+        hh.door = doorLeaf;
+        hh.destinationName = destName;
+        hh.prompt = "Abrir escotilla → " + destName;
+        hh.highlightRenderers = new[] { leaf.GetComponent<Renderer>(), handle.GetComponent<Renderer>() };
+        lastHatch = hh;
 
         HatchFrame(c.root, hatchCenter - n * 0.0f, Quaternion.LookRotation(-n), HatchSize);
 
@@ -1455,10 +1658,87 @@ public static class BuildIssScenes
         ht.destinationName = destName;
         ht.size = new Vector3(1.4f, 1.6f, 0.7f);
         ht.condition = cond;
+        ht.gate = hh;
+        hh.transition = ht;
 
         // Punto de llegada (al volver de ese módulo): 1.2 m dentro, mirando al interior
         Vector3 arrive = new Vector3(hatchCenter.x, 0f, hatchCenter.z) - n * 1.2f;
         return new Spawn(arrivalId, arrive, -n);
+    }
+
+    /// <summary>Última escotilla creada por Exit() (la usa el tutorial).</summary>
+    static HatchHandle lastHatch;
+
+    /// <summary>Insignia escondida (gamificación): una por módulo, +50 puntos.</summary>
+    static void Patch(Ctx c, string id, string moduleName, Vector3 pos)
+    {
+        var go = new GameObject("Insignia · " + moduleName);
+        go.transform.SetParent(c.content, false);
+        go.transform.position = pos;
+        var disc = Prim(PrimitiveType.Cylinder, "Disco", go.transform, Vector3.zero, new Vector3(0.12f, 0.006f, 0.12f), mGold,
+                        false, false, false, Quaternion.Euler(90f, 0f, 0f));
+        var core = Prim(PrimitiveType.Cylinder, "Centro", go.transform, new Vector3(0f, 0f, 0.004f), new Vector3(0.07f, 0.004f, 0.07f), mCyan,
+                        false, false, false, Quaternion.Euler(90f, 0f, 0f));
+        NovaText.Create(go.transform, "Texto", "NOVA", new Vector3(0f, -0.075f, 0f), Quaternion.Euler(0f, 180f, 0f),
+                        new Vector2(0.12f, 0.03f), 22, new Color(1f, 0.85f, 0.4f));
+        var sc = go.AddComponent<SphereCollider>();
+        sc.radius = 0.12f;
+        var p = go.AddComponent<MissionPatch>();
+        p.patchId = id;
+        p.patchName = "Insignia de " + moduleName;
+        p.prompt = p.patchName;
+        p.highlightRenderers = new[] { disc.GetComponent<Renderer>(), core.GetComponent<Renderer>() };
+    }
+
+    /// <summary>
+    /// La Luna (foto Apollo 11 recortada como disco con transparencia) como cartel lejano
+    /// que siempre mira a la cámara. Se acerca si el plano lejano de la cámara no llega.
+    /// </summary>
+    static void AddMoon(Transform parent, Vector3 offsetFromOrigin, float size)
+    {
+        if (mMoon == null || mMoon.mainTexture == null) { report.Add("AVISO: falta " + MoonTexture + " (sin Luna)."); return; }
+        var cam = Object.FindAnyObjectByType<Camera>();
+        float far = cam != null ? cam.farClipPlane : 8000f;
+        float dist = offsetFromOrigin.magnitude;
+        float k = dist > far * 0.8f ? (far * 0.8f) / dist : 1f;
+
+        var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        q.name = "Luna (Apollo 11)";
+        Object.DestroyImmediate(q.GetComponent<Collider>());
+        q.transform.SetParent(parent, true);
+        q.transform.position = (cam != null ? cam.transform.position : Vector3.zero) + offsetFromOrigin * k;
+        q.transform.localScale = Vector3.one * size * k;
+        var r = q.GetComponent<Renderer>();
+        r.sharedMaterial = mMoon;
+        r.shadowCastingMode = ShadowCastingMode.Off;
+        r.receiveShadows = false;
+        q.AddComponent<FaceCamera>();
+    }
+
+    /// <summary>Astronauta (modelo de recursos/, convertido sin Draco) escalado a 'height' metros.</summary>
+    static GameObject AddAstronaut(Transform parent, string name, Vector3 pos, Quaternion rot, float height)
+    {
+        var asset = AssetDatabase.LoadAssetAtPath<GameObject>(AstronautModel);
+        if (asset == null) { report.Add("AVISO: no se pudo cargar " + AstronautModel + "."); return null; }
+        var go = PrefabUtility.InstantiatePrefab(asset) as GameObject;
+        if (go == null) return null;
+        PrefabUtility.UnpackPrefabInstance(go, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+        go.name = name;
+        go.transform.SetParent(parent, false);
+        go.transform.SetPositionAndRotation(pos, rot);
+        go.transform.localScale = Vector3.one;
+        foreach (var c in go.GetComponentsInChildren<Collider>(true)) Object.DestroyImmediate(c);
+        var rs = go.GetComponentsInChildren<Renderer>(true);
+        if (rs.Length > 0)
+        {
+            Bounds b = rs[0].bounds;
+            foreach (var r in rs) b.Encapsulate(r.bounds);
+            if (b.size.y > 1e-4f) go.transform.localScale = Vector3.one * (height / b.size.y);
+            b = rs[0].bounds;
+            foreach (var r in rs) b.Encapsulate(r.bounds);
+            go.transform.position += pos - b.center;   // centrado en 'pos'
+        }
+        return go;
     }
 
     static Dictionary<Face, Opening> Openings(params object[] pairs)
@@ -1469,6 +1749,139 @@ public static class BuildIssScenes
     }
 
     static Opening HatchOpening => new Opening(0f, 0f, HatchSize.x, HatchSize.y);
+
+    // ════════════════════════════════════════════════════════════════════════
+    // 00 · TUTORIAL (sala de entrenamiento cerrada, antes de la historia)
+    // ════════════════════════════════════════════════════════════════════════
+
+    static readonly Vector3 TutC = new Vector3(0f, H * 0.5f, 0f), TutS = new Vector3(6f, H, 6f);
+
+    /// <summary>Pantalla negra con texto (Canvas world-space: fondo Image + Text).</summary>
+    static (Image bg, Text body) TutorialScreen(Transform parent, string name, Vector3 pos, Vector3 facing, Vector2 size)
+    {
+        var holder = new GameObject(name).transform;
+        holder.SetParent(parent, false);
+        holder.position = pos;
+        holder.rotation = Quaternion.LookRotation(facing, Vector3.up);
+        Box("Marco", holder, new Vector3(0f, 0f, -0.02f), new Vector3(size.x + 0.06f, size.y + 0.06f, 0.03f), mMetal, false, false);
+
+        var t = NovaText.Create(holder, "Pantalla", "", new Vector3(0f, 0f, 0.002f), Quaternion.Euler(0f, 180f, 0f),
+                                size, 34, new Color(0.9f, 0.95f, 1f), TextAnchor.UpperLeft);
+        var canvas = t.canvas.transform;
+        var bgGO = new GameObject("Fondo", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        bgGO.transform.SetParent(canvas, false);
+        bgGO.transform.SetAsFirstSibling();
+        var brt = bgGO.GetComponent<RectTransform>();
+        brt.anchorMin = Vector2.zero; brt.anchorMax = Vector2.one; brt.offsetMin = Vector2.zero; brt.offsetMax = Vector2.zero;
+        var img = bgGO.GetComponent<Image>();
+        img.color = new Color(0.02f, 0.03f, 0.05f, 0.95f);
+        img.raycastTarget = false;
+        var trt = t.rectTransform;
+        trt.offsetMin = new Vector2(45f, 35f); trt.offsetMax = new Vector2(-45f, -35f);
+        return (img, t);
+    }
+
+    static void BuildTutorial()
+    {
+        var c = NewInteriorScene(STutorial, 7, false, false);
+        Module(c.root, "SALA DE ENTRENAMIENTO", TutC, TutS, null, Openings(Face.PZ, HatchOpening), false);
+        Exit(c, TutC, TutS, Face.PZ, SNodo, "", "Nodo 1 Unity · Empezar misión", "from_nodo");
+        var exitHatch = lastHatch;
+
+        var tc = c.systems.gameObject.AddComponent<TutorialController>();
+        tc.exitHatch = exitHatch;
+        var steps = new List<TutorialController.Step>();
+        Vector2 sz = new Vector2(1.5f, 0.95f);
+
+        // 1 · Moverse: llegar a la plataforma verde
+        var pad = new GameObject("Plataforma · ven aquí").transform;
+        pad.SetParent(c.content, false);
+        pad.position = new Vector3(-1.8f, 0f, 1.6f);
+        Prim(PrimitiveType.Cylinder, "Disco", pad, new Vector3(0f, 0.01f, 0f), new Vector3(1.1f, 0.01f, 1.1f), mGreen, false, false);
+        Label(pad, "VEN AQUÍ", pad.position + Vector3.up * 0.9f, Vector3.right, new Vector2(0.8f, 0.12f), 60, new Color(0.2f, 1f, 0.45f));
+        var s1 = TutorialScreen(c.content, "Pantalla 1 · Moverse", new Vector3(-2.93f, 1.45f, 0.9f), Vector3.right, sz);
+        steps.Add(new TutorialController.Step
+        {
+            title = "Moverse",
+            vrText = "Empuja el STICK IZQUIERDO para caminar hacia donde miras.\nSTICK DERECHO a los lados: girar.\n\nCamina hasta la plataforma verde.",
+            desktopText = "W A S D: caminar.  Ratón: mirar.\nShift: correr.  Esc: soltar el ratón.\n\nCamina hasta la plataforma verde.",
+            screen = s1.bg, body = s1.body, zone = pad, zoneSize = new Vector3(1.1f, 3.2f, 1.1f)
+        });
+
+        // 2 · Agarrar: caja de práctica sobre un pedestal
+        Box("Pedestal", c.content, new Vector3(-2.2f, 0.45f, -1.0f), new Vector3(0.5f, 0.9f, 0.5f), mRackDark, true);
+        var box = Box("Caja de práctica", c.content, new Vector3(-2.2f, 1.03f, -1.0f), new Vector3(0.24f, 0.24f, 0.24f), mOru, true, false, true);
+        var tg = box.AddComponent<TutorialGrabbable>();
+        tg.stepIndex = 1;
+        tg.prompt = "Caja de práctica";
+        var s2 = TutorialScreen(c.content, "Pantalla 2 · Agarrar", new Vector3(-2.93f, 1.45f, -1.0f), Vector3.right, sz);
+        steps.Add(new TutorialController.Step
+        {
+            title = "Agarrar",
+            vrText = "Apunta a la caja con el láser y MANTÉN EL GRIP (botón lateral del mando).\nSuéltalo para soltarla.\n\nLas manos se cierran al pulsar.",
+            desktopText = "Apunta con la mira (punto blanco) a la caja y pulsa F para agarrarla.\nF otra vez para soltarla.",
+            screen = s2.bg, body = s2.body
+        });
+
+        // 3 · Usar: botón de práctica (mantener gatillo)
+        var cons = Console(c.content, "Consola de práctica", new Vector3(2.93f, 1.25f, -1.0f), Vector3.left, new Vector2(0.6f, 0.6f), "PRÁCTICA");
+        var btn = new GameObject("Botón de práctica").transform;
+        btn.SetParent(cons, false);
+        var cap = Prim(PrimitiveType.Cylinder, "Cap", btn, new Vector3(0f, -0.04f, 0.05f), new Vector3(0.16f, 0.02f, 0.16f), mCyan,
+                       true, false, false, Quaternion.Euler(90f, 0f, 0f));
+        var led = Box("Luz", btn, new Vector3(0f, 0.17f, 0.03f), new Vector3(0.06f, 0.06f, 0.02f), mRed, false, false);
+        var tb = btn.gameObject.AddComponent<TutorialButton>();
+        tb.stepIndex = 2;
+        tb.prompt = "Botón de práctica";
+        tb.statusLight = led.GetComponent<Renderer>();
+        tb.highlightRenderers = new[] { cap.GetComponent<Renderer>() };
+        var s3 = TutorialScreen(c.content, "Pantalla 3 · Usar", new Vector3(2.93f, 1.45f, 0.6f), Vector3.left, sz);
+        steps.Add(new TutorialController.Step
+        {
+            title = "Usar botones y herramientas",
+            vrText = "Apunta al botón azul y MANTÉN EL GATILLO (dedo índice).\nEl gatillo usa botones, consolas y herramientas.\nEl grip solo agarra.",
+            desktopText = "Apunta al botón azul y MANTÉN CLIC IZQUIERDO.\nEl clic usa botones, consolas y herramientas.\nF solo agarra.",
+            screen = s3.bg, body = s3.body
+        });
+
+        // 4 · Guía y tablet
+        var s4 = TutorialScreen(c.content, "Pantalla 4 · Guía", new Vector3(0.9f, 1.45f, -2.93f), Vector3.forward, sz);
+        steps.Add(new TutorialController.Step
+        {
+            title = "Camino y tablet",
+            vrText = "Si te pierdes, pulsa Y: aparecen flechas azules hasta el objetivo.\nGira la muñeca izquierda para ver la TABLET de misión (X cambia de pestaña).\n\nPulsa Y o X ahora.",
+            desktopText = "Si te pierdes, pulsa G: aparecen flechas azules hasta el objetivo.\nTab abre la TABLET de misión (1, 2, 3 cambian de pestaña).\n\nPulsa G o Tab ahora.",
+            screen = s4.bg, body = s4.body
+        });
+
+        // 5 · Escotilla (sale al Nodo y empieza la historia)
+        var s5 = TutorialScreen(c.content, "Pantalla 5 · Escotilla", new Vector3(-1.6f, 1.45f, 2.93f), Vector3.back, new Vector2(1.3f, 0.95f));
+        steps.Add(new TutorialController.Step
+        {
+            title = "Abrir la escotilla",
+            vrText = "Apunta a la escotilla y MANTÉN EL GATILLO para abrirla.\nAl cruzarla empieza la misión en el Nodo 1.",
+            desktopText = "Apunta a la escotilla y MANTÉN CLIC IZQUIERDO para abrirla.\nAl cruzarla empieza la misión en el Nodo 1.",
+            screen = s5.bg, body = s5.body
+        });
+        tc.steps = steps.ToArray();
+
+        // Información (no es un paso): controles del exterior y práctica libre con el taladro
+        var info = TutorialScreen(c.content, "Pantalla · Exterior (EVA)", new Vector3(-1.0f, 1.45f, -2.93f), Vector3.forward, sz);
+        info.body.text = "<b>FUERA DE LA ESTACIÓN (EVA)</b>\n\nVR: stick izq. empuja · A sube · B baja\nClic stick izq.: ESTABILIZAR (frenar)\n" +
+                         "Teclado: WASD empuja · Espacio/Ctrl sube/baja · X estabiliza\n\nEn el espacio no hay rozamiento: si sueltas, sigues flotando.";
+        info.body.fontSize = 30;
+        BuildRepairStation(c.content, "Mesa de práctica · Taladro", new Vector3(2.88f, 1.25f, 1.9f), Vector3.left,
+                           RepairStationType.PistolGrip_WelderAndDrill, SpaceToolType.PistolGripTool, "PRÁCTICA LIBRE · TALADRO", false, MissionAction.RepairConfirmed);
+        BuildTool(c.content, SpaceToolType.PistolGripTool, new Vector3(2.8f, 0.85f, 2.6f), Vector3.left);
+
+        Label(decorRoot, "SALA DE ENTRENAMIENTO · NOVA CORE", new Vector3(0f, 2.15f, -2.93f), Vector3.forward, new Vector2(2.4f, 0.16f), 64, new Color(0.15f, 0.2f, 0.3f));
+
+        var lights = new GameObject("Lights").transform; lights.SetParent(c.root, false);
+        PointLight(lights, "Light Tutorial A", new Vector3(0f, 2.1f, 0f), 7f, 1.3f, new Color(1f, 0.96f, 0.9f));
+
+        BuildPlayer(c, new[] { new Spawn("", new Vector3(0f, 0f, -0.8f), Vector3.right) }, true, 1.4f);
+        FinishScene(c, 1);
+    }
 
     // ════════════════════════════════════════════════════════════════════════
     // 02 · NODO 1 UNITY
@@ -1509,7 +1922,9 @@ public static class BuildIssScenes
         var lights = new GameObject("Lights").transform; lights.SetParent(c.root, false);
         PointLight(lights, "Light Node", new Vector3(0f, 2.0f, 0f), 6f, 1.3f, new Color(1f, 0.95f, 0.86f));
 
-        BuildPlayer(c, new[] { new Spawn("", new Vector3(0f, 0f, -0.4f), Vector3.forward), sDes, sZve, sQue, sCup }, true, 2.2f);
+        Patch(c, "nodo", "Nodo 1", new Vector3(1.25f, 2.05f, -1.25f));
+        c.systems.gameObject.AddComponent<GameIntroManager>();   // misión automática al venir del entrenamiento
+        BuildPlayer(c, new[] { new Spawn("", new Vector3(0f, 0f, -0.4f), Vector3.forward), sDes, sZve, sQue, sCup }, true, 1.4f);
         FinishScene(c, 1);
     }
 
@@ -1556,8 +1971,9 @@ public static class BuildIssScenes
         PointLight(lights, "Light Lab A", new Vector3(-4.0f, 2.0f, 0f), 6f, 1.2f, warm);
         PointLight(lights, "Light Lab B", new Vector3(-8.0f, 2.0f, 0f), 6f, 1.2f, warm);
 
+        Patch(c, "destiny", "Destiny", new Vector3(-9.55f, 0.35f, 0.65f));
         var def = sBack; def.id = "";
-        BuildPlayer(c, new[] { def, sBack }, true, 2.2f);
+        BuildPlayer(c, new[] { def, sBack }, true, 1.4f);
         FinishScene(c, 2);
     }
 
@@ -1606,8 +2022,9 @@ public static class BuildIssScenes
         PointLight(lights, "Light Svc A", new Vector3(4.5f, 2.0f, 0f), 6f, 1.2f, warm);
         PointLight(lights, "Light Svc B", new Vector3(9.0f, 2.0f, 0f), 6f, 1.2f, warm);
 
+        Patch(c, "zvezda", "Zvezda", new Vector3(3.3f, 2.0f, -0.8f));
         var def = sBack; def.id = "";
-        BuildPlayer(c, new[] { def, sBack }, true, 2.2f);
+        BuildPlayer(c, new[] { def, sBack }, true, 1.4f);
         FinishScene(c, 2);
     }
 
@@ -1672,6 +2089,10 @@ public static class BuildIssScenes
 
         var suitC = Console(c.content, "Armario Traje", new Vector3(-1.17f, 1.2f, 3.7f), Vector3.right, new Vector2(0.95f, 1.5f), "ARMARIO EVA");
         var suit = BuildSuit(c.content, new Vector3(-0.88f, 0.3f, 3.45f));
+        // Traje en el armario: el modelo de astronauta de recursos/ (si carga) en lugar del procedural
+        var astroSuit = AddAstronaut(c.content, "Traje EMU (modelo)", new Vector3(-0.82f, 1.15f, 3.45f),
+                                     Quaternion.LookRotation(Vector3.right, Vector3.up), 1.65f);
+        if (astroSuit != null) { Object.DestroyImmediate(suit); suit = astroSuit; }
         Button(suitC, "Btn Equipar Traje", new Vector3(-0.3f, -0.05f, 0f), MissionButton.Mode.CompleteAction, MissionAction.SuitEquipped,
                "Equiparse con el traje", "EQUIPAR\nTRAJE", mGreen, zone: lockZone);
         var r4 = c.reactions.gameObject.AddComponent<MissionReaction>();
@@ -1713,8 +2134,9 @@ public static class BuildIssScenes
         var lights = new GameObject("Lights").transform; lights.SetParent(c.root, false);
         PointLight(lights, "Light Airlock", new Vector3(0f, 2.0f, 4.2f), 6f, 1.1f, new Color(0.9f, 0.95f, 1f));
 
+        Patch(c, "quest", "Quest", new Vector3(0.85f, 0.35f, 6.0f));
         var def = sNodo; def.id = "";
-        BuildPlayer(c, new[] { def, sNodo, sEva }, true, 2.2f);
+        BuildPlayer(c, new[] { def, sNodo, sEva }, true, 1.4f);
         FinishScene(c, 1);
     }
 
@@ -1752,8 +2174,10 @@ public static class BuildIssScenes
         PointLight(lights, "Light Cupola", new Vector3(0f, 2.0f, -3.2f), 4f, 0.6f, new Color(1f, 0.95f, 0.86f));
 
         // Por defecto se aparece en el centro de la Cúpula mirando por la ventana
+        Patch(c, "cupula", "Cúpula", new Vector3(-0.95f, 2.05f, -2.75f));
+        AddMoon(c.root, new Vector3(-700f, 950f, -3000f), 260f);
         var def = new Spawn("", new Vector3(0f, 0f, -3.1f), Vector3.back);
-        BuildPlayer(c, new[] { def, sBack }, true, 2.0f);
+        BuildPlayer(c, new[] { def, sBack }, true, 1.3f);
         FinishScene(c, 1);
     }
 
@@ -1845,12 +2269,21 @@ public static class BuildIssScenes
                 if (mb is PlayerModeSwitcher || mb is VRMovement || mb is SpaceStationPlayerController) Object.DestroyImmediate(mb);
 
             pl.transform.SetPositionAndRotation(spawnPos, Quaternion.LookRotation(Vector3.ProjectOnPlane(dir, Vector3.up).sqrMagnitude > 0.01f ? Vector3.ProjectOnPlane(dir, Vector3.up) : Vector3.forward, Vector3.up));
+            // Fuera: mochila de propulsores con inercia (feedback: "simular el propulsor")
             var fly = pl.GetComponent<OrbitFreeFly>();
-            if (fly != null) { fly.moveSpeed = 3.5f; fly.speedRange = new Vector2(1f, 12f); fly.smoothing = 4f; }
+            if (fly != null)
+            {
+                fly.mode = OrbitFreeFly.MoveMode.Thrusters;
+                fly.thrustAcceleration = 0.9f;
+                fly.maxThrustSpeed = 2.5f;
+                fly.passiveDamping = 0.15f;
+                fly.stabilizeDamping = 2.5f;
+            }
             var rig = pl.GetComponent<NovaInteractionRig>();
             if (rig == null) rig = pl.AddComponent<NovaInteractionRig>();
-            rig.laserMaterial = mLaser; rig.controllerMaterial = mController;
+            rig.laserMaterial = mLaser; rig.controllerMaterial = mGlove;
             rig.desktopRayLength = 4f; rig.vrRayLength = 5f;
+            AddTablet(pl.transform);
             if (pl.GetComponent<SceneEntry>() == null) pl.AddComponent<SceneEntry>();
             var cam = pl.GetComponentInChildren<Camera>(true);
             if (cam != null && cam.GetComponent<ScreenFader>() == null) AddFader(cam.transform);
@@ -1913,6 +2346,13 @@ public static class BuildIssScenes
         sl.type = LightType.Spot; sl.range = 10f; sl.spotAngle = 55f; sl.intensity = 3f; sl.shadows = LightShadows.None;
         spot.AddComponent<UniversalAdditionalLightData>();
 
+        // Compañero de EVA flotando junto al panel, y la Luna al fondo
+        var buddy = AddAstronaut(c.root, "Astronauta compañero (EVA)", station - right * 2.2f - dir * 0.8f + Vector3.up * 0.4f,
+                                 Quaternion.LookRotation(right, Vector3.up), 1.8f);
+        if (buddy != null)
+            Label(c.root, "CMDTE. RÍOS · APOYO EVA", buddy.transform.position + Vector3.up * 1.3f, -dir, new Vector2(1.4f, 0.14f), 70, new Color(0.75f, 0.95f, 1f));
+        AddMoon(c.root, new Vector3(-1500f, 1800f, -5000f), 380f);
+
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         report.Add("Escena: " + SEva + " (panel: " + (bestName.Length > 0 ? bestName : "?") + ", " + Vector3.Distance(spawnPos, station).ToString("0") + " m desde Quest)");
@@ -1938,7 +2378,7 @@ public static class BuildIssScenes
         {
             var rig = pl.GetComponent<NovaInteractionRig>();
             if (rig == null) rig = pl.AddComponent<NovaInteractionRig>();
-            rig.laserMaterial = mLaser; rig.controllerMaterial = mController;
+            rig.laserMaterial = mLaser; rig.controllerMaterial = mGlove;
             rig.desktopRayLength = 450f; rig.vrRayLength = 450f;
             if (pl.GetComponent<SceneEntry>() == null) pl.AddComponent<SceneEntry>();
             var cam = pl.GetComponentInChildren<Camera>(true);
@@ -1946,6 +2386,17 @@ public static class BuildIssScenes
         }
 
         var root = new GameObject("Marcadores Módulos").transform;
+
+        // Astronauta flotando junto a la esclusa Quest y la Luna de fondo
+        foreach (var n in new[] { "Astronauta (exterior)", "Luna (Apollo 11)" })
+        {
+            var old = GameObject.Find(n);
+            if (old != null) Object.DestroyImmediate(old);
+        }
+        Bounds? qb = BoundsOf("12 Quest Airlock");
+        if (qb.HasValue)
+            AddAstronaut(root, "Astronauta (exterior)", qb.Value.center + new Vector3(4f, 3f, 2f), Quaternion.Euler(10f, -120f, 15f), 1.8f);
+        AddMoon(root, new Vector3(-1500f, 1800f, -5000f), 380f);
         var modules = new[]
         {
             new[] { "02 Unity Node 1",               SNodo,    "Nodo 1 Unity" },
