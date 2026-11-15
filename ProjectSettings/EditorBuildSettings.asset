@@ -8,6 +8,24 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/NovaCore/Scenes/01_Orbit.unity
     guid: 2edf226c2412a9d49bb77fe25d3fedbf
+  - enabled: 1
+    path: Assets/Game/Scenes/ISS/02_Nodo.unity
+    guid: 7ac06179527c8d940a50d0ea68113f21
+  - enabled: 1
+    path: Assets/Game/Scenes/ISS/03_Destiny.unity
+    guid: 08b7a288944326f4bb8ff808fb7e4078
+  - enabled: 1
+    path: Assets/Game/Scenes/ISS/04_Zvezda.unity
+    guid: fa186c832d88ea548aa8a253ef4d5c2e
+  - enabled: 1
+    path: Assets/Game/Scenes/ISS/05_Quest.unity
+    guid: 96e17009c7a47c649aab4dc60a8f00b1
+  - enabled: 1
+    path: Assets/Game/Scenes/ISS/06_Cupula.unity
+    guid: b6b36d029cfe5d640963fe2d84038d90
+  - enabled: 1
+    path: Assets/Game/Scenes/ISS/07_EVA.unity
+    guid: eb6422f52df499048afc17b924da64bc
   - enabled: 0
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05

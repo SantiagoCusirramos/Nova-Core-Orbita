@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MissionDefinition
   missionId: mission_solar
   missionName: "Reparaci\xF3n exterior del panel solar"
-  description: "Realizar una actividad extravehicular para repara el panel solar da\xF1ado y restablecer la generaci\xF3n de energ\xEDa de la estaci\xF3n."
+  description: "Realizar una actividad extravehicular para reparar el panel solar da\xF1ado y restablecer la generaci\xF3n de energ\xEDa de la estaci\xF3n."
   objectives:
   - objectiveId: solar_01
     description: Equiparse con el traje especial.

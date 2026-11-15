@@ -8,6 +8,12 @@ public class MissionManager : MonoBehaviour
     // INSTANCIA PRINCIPAL
     public static MissionManager Instance { get; private set; }
 
+    // PERSISTENCIA ENTRE ESCENAS (módulos de la ISS en escenas separadas)
+    [Header("Persistencia")]
+    [Tooltip("Si está activo, el primer MissionManager sobrevive a los cambios de escena y los de las escenas siguientes se descartan sin error.")]
+    [SerializeField]
+    private bool persistAcrossScenes = false;
+
     // MISIONES CONFIGURADAS
     [Header("Secuencia de misiones")]
     [SerializeField]
@@ -85,14 +91,28 @@ public class MissionManager : MonoBehaviour
 
     public event Action<MissionState, string> OnObjectiveChanged;
 
-    // Nuevo evento: cambia la mision o fase actual
+    // Nuevo evento: cambia la mision o fase actual (null al reiniciar)
     public event Action<MissionDefinition> OnMissionChanged;
+
+    // Nuevo evento: se acepto una accion (antes de avanzar al siguiente objetivo).
+    // Lo usan los objetos de escena para reaccionar (abrir compuertas, ocultar piezas...).
+    public event Action<MissionAction> OnActionCompleted;
+
+    // Lista de misiones configuradas (solo lectura)
+    public IReadOnlyList<MissionDefinition> Missions => missions;
 
     // INICIALIZACION
     private void Awake()
     {
         if (Instance != null && Instance != this)
         {
+            if (persistAcrossScenes)
+            {
+                // Ya hay una secuencia en curso que viene de otra escena: se conserva esa.
+                Destroy(gameObject);
+                return;
+            }
+
             Debug.LogError(
                 "Ya existe un MissionManager en la escena.",
                 this
@@ -104,6 +124,12 @@ public class MissionManager : MonoBehaviour
         }
 
         Instance = this;
+
+        if (persistAcrossScenes)
+        {
+            transform.SetParent(null);
+            DontDestroyOnLoad(gameObject);
+        }
 
         currentState = MissionState.NotStarted;
         currentMissionIndex = -1;
@@ -169,6 +195,8 @@ public class MissionManager : MonoBehaviour
 
         Debug.Log("Objetivo completado: " + objective.Description);
 
+        OnActionCompleted?.Invoke(action);
+
         AdvanceObjective();
 
         return true;
@@ -231,6 +259,7 @@ public class MissionManager : MonoBehaviour
 
         NotifyObjectiveChanged();
 
+        OnMissionChanged?.Invoke(null);
         OnMissionReset?.Invoke();
 
         Debug.Log("Secuencia de misiones reiniciada.");
@@ -288,4 +317,4 @@ public class MissionManager : MonoBehaviour
 
         return true;
     }
-}
+}
