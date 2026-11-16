@@ -88,6 +88,8 @@ namespace NovaCore
 
         private void OnObjectiveChanged(MissionState s, string o) => RefreshVisual();
 
+        public override bool AllowPoke => mode != Mode.ResetMission;   // tocar con el dedo pulsa (REINICIAR no, para no reiniciar sin querer)
+
         public override string GetPrompt()
         {
             if (holdSeconds > 0f) return prompt + " (mantener)";

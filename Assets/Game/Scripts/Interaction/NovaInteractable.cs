@@ -61,6 +61,12 @@ namespace NovaCore
         /// <summary>¿Se puede agarrar ahora mismo?</summary>
         public virtual bool CanGrab => false;
 
+        /// <summary>
+        /// Se puede pulsar tocándolo con el dedo (VR): botones, consolas, escotillas.
+        /// Al tocar se llama OnUsePressed / OnUseHeld / OnUseReleased, igual que con el gatillo.
+        /// </summary>
+        public virtual bool AllowPoke => false;
+
         /// <summary>Posición/rotación local al sujetarlo en la mano (o delante de la cámara).</summary>
         public virtual Vector3    HoldLocalPosition => Vector3.zero;
         public virtual Quaternion HoldLocalRotation => Quaternion.identity;

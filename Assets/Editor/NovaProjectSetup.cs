@@ -69,7 +69,8 @@ public static class NovaProjectSetup
     /// <summary>01_Orbit + escenas de módulos ISS en Build Settings (conserva otras, desactivadas).</summary>
     public static string RegisterScenes()
     {
-        var wanted = new List<string> { OrbitScene };
+        // 00_Tutorial va primero: es la escena con la que arranca el juego en el visor
+        var wanted = new List<string> { BuildIssScenes.ScenePathOf(BuildIssScenes.STutorial), OrbitScene };
         foreach (var n in BuildIssScenes.SceneNames) wanted.Add(BuildIssScenes.ScenePathOf(n));
 
         var scenes = new List<EditorBuildSettingsScene>();

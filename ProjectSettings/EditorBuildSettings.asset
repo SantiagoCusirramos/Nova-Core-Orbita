@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Game/Scenes/ISS/00_Tutorial.unity
+    guid: e42d4bb691034ce498e973a8c063a034
+  - enabled: 1
     path: Assets/NovaCore/Scenes/01_Orbit.unity
     guid: 2edf226c2412a9d49bb77fe25d3fedbf
   - enabled: 1
@@ -25,7 +28,7 @@ EditorBuildSettings:
     guid: b6b36d029cfe5d640963fe2d84038d90
   - enabled: 1
     path: Assets/Game/Scenes/ISS/07_EVA.unity
-    guid: eb6422f52df499048afc17b924da64bc
+    guid: 53d3223300868de4698486d022a0b38f
   - enabled: 0
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05

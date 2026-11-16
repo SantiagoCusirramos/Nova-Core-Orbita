@@ -92,8 +92,16 @@ namespace NovaCore
             switch (m.CurrentState)
             {
                 case MissionState.NotStarted:
-                    _missionLine = "NOVA CORE · ISS — EN ESPERA";
-                    SetObjective("Ve al panel verde INICIAR en el Nodo y púlsalo.");
+                    if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == MissionGate.SceneTutorial)
+                    {
+                        _missionLine = "NOVA CORE · ENTRENAMIENTO";
+                        SetObjective("Sigue las pantallas negras de la sala, paso a paso.");
+                    }
+                    else
+                    {
+                        _missionLine = "NOVA CORE · ISS — EN ESPERA";
+                        SetObjective("Ve al panel verde INICIAR en el Nodo y púlsalo.");
+                    }
                     break;
 
                 case MissionState.Completed:
@@ -136,6 +144,11 @@ namespace NovaCore
         {
             if (_cam == null || !_cam.isActiveAndEnabled) { _cam = Camera.main; _snapNext = true; }
             if (_cam == null) return;
+
+            // Durante el video de introducción el panel no tapa la pantalla
+            bool intro = IntroVideoPlayer.IsPlaying;
+            if (_panel != null && _panel != transform && _panel.gameObject.activeSelf == intro) _panel.gameObject.SetActive(!intro);
+            if (intro) return;
 
             FollowView();
             UpdatePrompt();
@@ -214,8 +227,30 @@ namespace NovaCore
                 s += (s.Length > 0 ? "\n" : "") + "<color=#9FDCFF>Ve a: " + MissionGate.CurrentLocation() + "</color>";
             }
 
+            bool xr = NovaXR.IsActive;
+            if (MissionGate.IsRunning)
+                s += "\n<color=#7FA8C8>" + (xr ? "Y" : "G") + ": mostrar camino · " + (xr ? "Mira tu muñeca izq.: tablet" : "Tab: tablet") + "</color>";
+
+            // Propulsores del traje (EVA): velocidad y botones, separados de los de herramientas
+            if (_fly == null && Time.unscaledTime > _nextFlySearch)
+            {
+                _nextFlySearch = Time.unscaledTime + 2f;
+                _fly = FindAnyObjectByType<OrbitFreeFly>();
+            }
+            if (_fly != null && _fly.mode == OrbitFreeFly.MoveMode.Thrusters)
+                s += "\n<color=#FFB86B>Propulsores " + _fly.CurrentSpeed.ToString("0.0") + " m/s · " +
+                     (xr ? "Stick izq.: empujar · A: subir · B: bajar · Clic stick izq.: ESTABILIZAR"
+                         : "WASD: empujar · Espacio/Ctrl: subir/bajar · X: ESTABILIZAR") + "</color>";
+
+            var sc = MissionScore.Instance;
+            if (sc != null && (MissionGate.IsRunning || sc.Score > 0))
+                s += "\n<color=#FFD27A>Puntos " + sc.Score + " · Insignias " + sc.PatchesFound + "/" + sc.totalPatches + "</color>";
+
             promptText.text = s;
         }
+
+        private OrbitFreeFly _fly;
+        private float _nextFlySearch;
 
         private static NovaInteractor[] _cache;
         private static float _cacheTime = -10f;
@@ -267,8 +302,11 @@ namespace NovaCore
             Color white = new Color(0.92f, 0.96f, 1f);
             titleText     = NovaText.Create(_panel, "Title",     "", new Vector3(0f,  0.120f, 0f), face, new Vector2(0.62f, 0.05f), 30, new Color(0.55f, 0.85f, 1f));
             objectiveText = NovaText.Create(_panel, "Objective", "", new Vector3(0f,  0.055f, 0f), face, new Vector2(0.62f, 0.08f), 26, white);
-            feedbackText  = NovaText.Create(_panel, "Feedback",  "", new Vector3(0f, -0.010f, 0f), face, new Vector2(0.62f, 0.05f), 24, white);
-            promptText    = NovaText.Create(_panel, "Prompt",    "", new Vector3(0f, -0.070f, 0f), face, new Vector2(0.62f, 0.07f), 20, white);
+            // Avisos y ayudas más altos: el tutorial y las pistas usan 3-4 líneas
+            feedbackText  = NovaText.Create(_panel, "Feedback",  "", new Vector3(0f, -0.035f, 0f), face, new Vector2(0.66f, 0.09f), 22, white);
+            promptText    = NovaText.Create(_panel, "Prompt",    "", new Vector3(0f, -0.150f, 0f), face, new Vector2(0.66f, 0.13f), 18, white);
+            feedbackText.verticalOverflow = VerticalWrapMode.Overflow;
+            promptText.verticalOverflow = VerticalWrapMode.Overflow;
             titleText.fontStyle = FontStyle.Bold;
 
             // Dibujar el HUD por encima de las paredes (si no, se esconde al acercarse a ellas)

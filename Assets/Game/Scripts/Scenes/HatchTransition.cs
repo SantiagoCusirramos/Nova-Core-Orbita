@@ -22,6 +22,9 @@ namespace NovaCore
         [Header("Condición")]
         public Condition condition = Condition.Always;
 
+        [Tooltip("Si está asignada, hay que abrir la escotilla con el mando antes de pasar")]
+        public HatchHandle gate;
+
         private Camera _cam;
         private bool _armed;
         private float _nextWarn;
@@ -46,22 +49,40 @@ namespace NovaCore
             }
             if (!_armed) return;
 
-            if (!IsOpen())
+            // Escotilla de salida del entrenamiento: al cruzarla se ve el video de introducción
+            // (aunque se haya saltado el tutorial). El propio video lleva luego al Nodo.
+            var intro = IntroVideoPlayer.Instance;
+            if (intro != null && intro.Pending) return;
+
+            if (!ConditionMet || (gate != null && !gate.IsOpen))
             {
                 if (Time.unscaledTime >= _nextWarn)
                 {
-                    _nextWarn = Time.unscaledTime + 2f;
-                    MissionHUD.Feedback(condition == Condition.AirlockOuterOpen
-                        ? "Escotilla exterior cerrada: completa la preparación EVA y despresuriza."
-                        : "Esclusa despresurizada: represuriza antes de volver al Nodo.", MissionHUD.Tone.Warning);
+                    _nextWarn = Time.unscaledTime + 2.5f;
+                    MissionHUD.Feedback(!ConditionMet ? ClosedMessage()
+                        : "Escotilla cerrada: apunta a ella y mantén el gatillo (clic izquierdo) para abrirla.",
+                        MissionHUD.Tone.Warning);
                 }
                 return;
             }
 
             _armed = false;
+            if (intro != null && !intro.Done && intro.loadSceneAfter == targetScene)
+            {
+                intro.Play();
+                return;
+            }
             MissionHUD.Feedback("Pasando a " + destinationName + "...", MissionHUD.Tone.Info, 1.5f);
             SceneTransit.Go(targetScene, targetSpawnId);
         }
+
+        /// <summary>Mensaje cuando la esclusa no permite pasar.</summary>
+        public string ClosedMessage() => condition == Condition.AirlockOuterOpen
+            ? "Escotilla exterior bloqueada: completa la preparación EVA y despresuriza."
+            : "Esclusa despresurizada: represuriza antes de volver al Nodo.";
+
+        /// <summary>True si la condición de la esclusa permite pasar.</summary>
+        public bool ConditionMet => IsOpen();
 
         private bool IsOpen()
         {

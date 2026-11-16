@@ -95,6 +95,8 @@ namespace NovaCore
             var m = MissionManager.Instance;
             if (m != null) m.OnMissionReset += ReturnToDock;
             if (toolLight != null) toolLight.enabled = false;
+            var zg = GetComponent<ZeroGBody>();
+            if (zg != null) zg.OnLost += ReturnToDock;   // lanzada lejos (p. ej. al espacio): vuelve a su soporte
         }
 
         private void OnDestroy()
@@ -129,6 +131,8 @@ namespace NovaCore
         {
             if (Holder != null) Holder.ForceRelease();
             if (dockPoint == null) return;
+            var zg = GetComponent<ZeroGBody>();
+            if (zg != null) zg.Freeze();   // en el soporte queda fija; suelta lejos, flota y rebota
             transform.SetParent(dockPoint, false);
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
