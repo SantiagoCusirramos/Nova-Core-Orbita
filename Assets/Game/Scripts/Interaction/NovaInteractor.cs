@@ -15,6 +15,13 @@ namespace NovaCore
     /// Modo escritorio (una en la cámara): rayo desde el centro de la pantalla.
     ///   Click izquierdo → usar (pulsar / mantener)
     ///   F               → agarrar / soltar (alterna)
+    ///   R               → lanzar el objeto sujeto (gravedad cero)
+    ///
+    /// Interacción directa (VR):
+    ///   - Agarre de cerca: acerca la mano a un objeto y pulsa el grip (sin apuntar).
+    ///   - Pulsar con el dedo: toca un botón / consola / escotilla con la punta del índice.
+    ///   - Palancas: agárralas de cerca con el grip y muévelas.
+    ///   - Al soltar un objeto sale con la velocidad y el giro de la mano (lanzar).
     ///
     /// Lo crea NovaInteractionRig; no hace falta añadirlo a mano.
     /// </summary>
@@ -42,6 +49,22 @@ namespace NovaCore
         [Tooltip("Material del láser (lo asigna NovaInteractionRig). Debe soportar color de vértice.")]
         public Material laserMaterial;
 
+        [Header("Interacción directa (VR)")]
+        [Tooltip("Radio para agarrar de cerca sin apuntar (m)")]
+        public float nearGrabRadius = 0.12f;
+        [Tooltip("Punta del índice respecto al mando (m)")]
+        public Vector3 fingertipOffset = new Vector3(0f, -0.025f, 0.085f);
+        public float pokeRadius = 0.03f;
+        [Tooltip("La palma también pulsa botones y empuja palancas al tocarlos")]
+        public Vector3 palmOffset = new Vector3(0f, -0.01f, -0.02f);
+        public float palmRadius = 0.05f;
+
+        [Header("Lanzar")]
+        [Tooltip("Multiplica la velocidad de la mano al soltar (1 = física real)")]
+        public float throwScale = 1.15f;
+        [Tooltip("Velocidad del lanzamiento con R en escritorio (m/s)")]
+        public float desktopThrowSpeed = 3.5f;
+
         // ── Estado público ───────────────────────────────────────────────────
         public NovaInteractable Hovered { get; private set; }
         public NovaInteractable Held    { get; private set; }
@@ -61,6 +84,17 @@ namespace NovaCore
         private Transform _holdAnchor;
         private Transform _heldPrevParent;
         private InputAction _aimPos, _aimRot;
+
+        // Historial del ancla para calcular la velocidad de lanzamiento
+        private const int VelSamples = 6;
+        private readonly Vector3[] _posHist = new Vector3[VelSamples];
+        private readonly Quaternion[] _rotHist = new Quaternion[VelSamples];
+        private readonly float[] _timeHist = new float[VelSamples];
+        private int _histCount, _histIndex;
+
+        private NovaInteractable _pokeTarget;
+        private NovaLever _dragLever;
+        private readonly Collider[] _overlap = new Collider[16];
 
         private void Start()
         {
@@ -86,6 +120,8 @@ namespace NovaCore
 
         private void OnDisable()
         {
+            if (_dragLever != null) { _dragLever.EndDrag(this); _dragLever = null; }
+            if (_pokeTarget != null) { _pokeTarget.OnUseReleased(this); _pokeTarget = null; }
             ForceRelease();
             SetHovered(null);
             if (_laser != null) _laser.enabled = false;
@@ -108,8 +144,11 @@ namespace NovaCore
             bool use  = ReadUse();
             bool grab = ReadGrab();
 
+            RecordAnchor();
             HandleGrab(grab);
             HandleUse(use);
+            if (IsVR) HandlePoke(grab || use);
+            if (!IsVR) HandleDesktopThrow();
 
             _usePrev  = use;
             _grabPrev = grab;
@@ -139,7 +178,9 @@ namespace NovaCore
             NovaInteractable target = null;
 
             // RaycastAll para poder saltarnos el objeto que llevamos en la mano
-            var hits = Physics.RaycastAll(CurrentRay, rayLength, ~0, QueryTriggerInteraction.Ignore);
+            // Se incluyen triggers solo si son interactuables (p. ej. carteles de módulos en 01_Orbit,
+            // que son trigger para que el jugador no choque con ellos)
+            var hits = Physics.RaycastAll(CurrentRay, rayLength, ~0, QueryTriggerInteraction.Collide);
             float best = float.MaxValue;
             RaycastHit bestHit = default(RaycastHit);
             foreach (var h in hits)
@@ -147,6 +188,8 @@ namespace NovaCore
                 if (h.collider == null) continue;
                 if (Held != null && h.collider.transform.IsChildOf(Held.transform)) continue;
                 if (h.collider is CharacterController) continue;
+                if (h.collider.attachedRigidbody != null && NovaHandPhysics.HandBodies.Contains(h.collider.attachedRigidbody)) continue;
+                if (h.collider.isTrigger && h.collider.GetComponentInParent<NovaInteractable>() == null) continue;
                 if (h.distance < best) { best = h.distance; bestHit = h; }
             }
 
@@ -201,13 +244,25 @@ namespace NovaCore
 
             if (IsVR)
             {
-                // VR: mantener el grip = sujetar
-                if (pressed && Held == null && Hovered != null)
+                // VR: mantener el grip = sujetar. Primero lo que esté al alcance de la mano
+                // (agarre directo); si no hay nada cerca, lo que apunta el láser.
+                if (pressed && Held == null && _dragLever == null)
                 {
-                    if (Hovered.CanGrab) Grab(Hovered);
-                    else Hovered.OnGrabDenied(this);
+                    var near = FindNear(out NovaLever lever);
+                    if (lever != null) { _dragLever = lever; lever.BeginDrag(this); }
+                    else if (near != null) Grab(near);
+                    else if (Hovered != null)
+                    {
+                        if (Hovered is NovaLever hl) { _dragLever = hl; hl.BeginDrag(this); }
+                        else if (Hovered.CanGrab) Grab(Hovered);
+                        else Hovered.OnGrabDenied(this);
+                    }
                 }
-                else if (released && Held != null) Release();
+                else if (released)
+                {
+                    if (_dragLever != null) { _dragLever.EndDrag(this); _dragLever = null; }
+                    if (Held != null) Release();
+                }
             }
             else
             {
@@ -232,15 +287,22 @@ namespace NovaCore
             target.SetHolder(this);
             _heldPrevParent = target.transform.parent;
 
+            var zg = target.GetComponent<ZeroGBody>();
+            if (zg != null) zg.Hold();
+
             target.transform.SetParent(_holdAnchor, false);
             target.transform.localPosition = target.HoldLocalPosition;
             target.transform.localRotation = target.HoldLocalRotation;
 
             target.OnGrab(this);
+            _histCount = 0;
             if (IsVR) NovaXR.Haptic(Node, 0.4f, 0.06f);
         }
 
-        public void Release()
+        public void Release() => ReleaseWith(EstimateVelocity(), EstimateAngularVelocity());
+
+        /// <summary>Suelta el objeto con una velocidad (gravedad cero: sigue avanzando hasta chocar).</summary>
+        public void ReleaseWith(Vector3 velocity, Vector3 angularVelocity)
         {
             if (Held == null) return;
             var target = Held;
@@ -251,8 +313,121 @@ namespace NovaCore
             target.transform.SetParent(_heldPrevParent, true);
             _heldPrevParent = null;
 
-            target.OnRelease(this);
+            target.OnRelease(this);   // p. ej. una herramienta puede volver a su soporte aquí
+            var zg = target != null ? target.GetComponent<ZeroGBody>() : null;
+            if (zg != null) zg.Launch(velocity * throwScale, angularVelocity);   // no hace nada si quedó fija en su soporte
             if (IsVR) NovaXR.Haptic(Node, 0.25f, 0.04f);
+        }
+
+        // ── Velocidad de la mano (para lanzar) ───────────────────────────────
+
+        private void RecordAnchor()
+        {
+            if (_holdAnchor == null) return;
+            _posHist[_histIndex] = _holdAnchor.position;
+            _rotHist[_histIndex] = _holdAnchor.rotation;
+            _timeHist[_histIndex] = Time.time;
+            _histIndex = (_histIndex + 1) % VelSamples;
+            _histCount = Mathf.Min(_histCount + 1, VelSamples);
+        }
+
+        private int Oldest => _histCount < VelSamples ? 0 : _histIndex;
+        private int Newest => (_histIndex - 1 + VelSamples) % VelSamples;
+
+        private Vector3 EstimateVelocity()
+        {
+            if (_histCount < 2) return Vector3.zero;
+            float dt = _timeHist[Newest] - _timeHist[Oldest];
+            return dt > 1e-4f ? (_posHist[Newest] - _posHist[Oldest]) / dt : Vector3.zero;
+        }
+
+        private Vector3 EstimateAngularVelocity()
+        {
+            if (_histCount < 2) return Vector3.zero;
+            float dt = _timeHist[Newest] - _timeHist[Oldest];
+            if (dt <= 1e-4f) return Vector3.zero;
+            Quaternion d = _rotHist[Newest] * Quaternion.Inverse(_rotHist[Oldest]);
+            d.ToAngleAxis(out float angle, out Vector3 axis);
+            if (angle > 180f) angle -= 360f;
+            if (float.IsNaN(axis.x) || float.IsInfinity(axis.x)) return Vector3.zero;
+            return axis * (angle * Mathf.Deg2Rad / dt);
+        }
+
+        // ── Escritorio: R = lanzar ───────────────────────────────────────────
+
+        private void HandleDesktopThrow()
+        {
+            var kb = Keyboard.current;
+            if (Held == null || kb == null || !kb.rKey.wasPressedThisFrame) return;
+            if (Held.GetComponent<ZeroGBody>() == null) return;
+            ReleaseWith(transform.forward * desktopThrowSpeed / Mathf.Max(0.01f, throwScale) + EstimateVelocity(),
+                        Random.insideUnitSphere * 2f);
+        }
+
+        // ── Interacción directa (VR) ─────────────────────────────────────────
+
+        private Vector3 Fingertip => transform.TransformPoint(fingertipOffset);
+
+        /// <summary>Objeto agarrable (o palanca) más cercano a la mano.</summary>
+        private NovaInteractable FindNear(out NovaLever lever)
+        {
+            lever = null;
+            Vector3 c = transform.TransformPoint(new Vector3(0f, 0f, 0.04f));
+            int n = Physics.OverlapSphereNonAlloc(c, nearGrabRadius, _overlap, ~0, QueryTriggerInteraction.Collide);
+            NovaInteractable best = null; float bestD = float.MaxValue;
+            for (int i = 0; i < n; i++)
+            {
+                if (_overlap[i].attachedRigidbody != null && NovaHandPhysics.HandBodies.Contains(_overlap[i].attachedRigidbody)) continue;
+                var it = _overlap[i].GetComponentInParent<NovaInteractable>();
+                if (it == null || !it.isActiveAndEnabled) continue;
+                bool ok = it.CanGrab || it is NovaLever;
+                if (!ok) continue;
+                float d = Vector3.Distance(c, _overlap[i].ClosestPoint(c));
+                if (d < bestD) { bestD = d; best = it; }
+            }
+            lever = best as NovaLever;
+            return lever != null ? null : best;
+        }
+
+        private NovaInteractable Touching(Vector3 point, float radius)
+        {
+            int n = Physics.OverlapSphereNonAlloc(point, radius, _overlap, ~0, QueryTriggerInteraction.Collide);
+            for (int i = 0; i < n; i++)
+            {
+                var col = _overlap[i];
+                if (col.attachedRigidbody != null && NovaHandPhysics.HandBodies.Contains(col.attachedRigidbody)) continue;
+                var it = col.GetComponentInParent<NovaInteractable>();
+                if (it != null && it.isActiveAndEnabled && it.AllowPoke) return it;
+            }
+            return null;
+        }
+
+        /// <summary>Pulsar tocando con la punta del índice o la palma (sin gatillo).</summary>
+        private void HandlePoke(bool busy)
+        {
+            NovaInteractable touched = null;
+            if (Held == null && _dragLever == null && _usingTarget == null && !busy)
+            {
+                // Punta del índice primero; si no toca nada, la palma (la mano entera choca con botones y palancas)
+                touched = Touching(Fingertip, pokeRadius);
+                if (touched == null) touched = Touching(transform.TransformPoint(palmOffset), palmRadius);
+            }
+
+            if (touched != _pokeTarget)
+            {
+                if (_pokeTarget != null) _pokeTarget.OnUseReleased(this);
+                _pokeTarget = touched;
+                if (_pokeTarget != null)
+                {
+                    LastActive = this;
+                    _pokeTarget.OnUsePressed(this);
+                    NovaXR.Haptic(Node, 0.6f, 0.05f);
+                }
+            }
+            else if (_pokeTarget != null)
+            {
+                _pokeTarget.OnUseHeld(this, Time.deltaTime);
+            }
         }
 
         /// <summary>Suelta sin efectos (lo llaman objetos que se bloquean o se resetean).</summary>

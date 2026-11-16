@@ -26,6 +26,17 @@ namespace NovaCore
         public bool stowOnGrab = false;
         [TextArea] public string stowMessage = "Guardado en tu bolsa de transporte.";
 
+        [Header("Llevarlo en la mano entre módulos")]
+        [Tooltip("Una vez recogido, viaja contigo en la mano a cada módulo hasta entregarlo")]
+        public bool carryAcrossScenes = false;
+        [Tooltip("Acción que lo entrega (después de ella ya no viaja contigo)")]
+        public MissionAction deliveredAction = MissionAction.EnergyModuleLoadedIntoHatch;
+        [Tooltip("Copia en otros módulos: solo aparece (en tu mano) si lo llevas")]
+        public bool onlyWhenCarried = false;
+
+        /// <summary>Mano con la que se llevaba (para volver a ponerlo en la misma al cambiar de módulo).</summary>
+        public static NovaInteractor.Source CarryHand = NovaInteractor.Source.RightHand;
+
         [Header("Sujeción")]
         public Vector3 holdOffset = new Vector3(0f, 0f, 0.12f);
         public Vector3 holdEuler = Vector3.zero;
@@ -85,6 +96,40 @@ namespace NovaCore
             // Si ya se recogió (venimos de otra escena), no debe estar aquí
             if (stowOnGrab && completeOnGrab && MissionGate.IsDone(grabAction))
                 gameObject.SetActive(false);
+
+            if (carryAcrossScenes)
+            {
+                bool collected = MissionGate.IsDone(grabAction);
+                bool delivered = MissionGate.IsDone(deliveredAction);
+                if (delivered) gameObject.SetActive(false);                       // ya está instalado
+                else if (collected) StartCoroutine(AttachToHand());                // lo traes en la mano
+                else if (onlyWhenCarried) gameObject.SetActive(false);             // copia: aún no lo tienes
+            }
+        }
+
+        /// <summary>Al entrar a un módulo llevando la pieza, aparece en tu mano.</summary>
+        private System.Collections.IEnumerator AttachToHand()
+        {
+            float until = Time.time + 6f;
+            while (Time.time < until)
+            {
+                var rig = FindAnyObjectByType<NovaInteractionRig>();
+                NovaInteractor it = null;
+                if (rig != null)
+                {
+                    if (NovaXR.IsActive)
+                        it = CarryHand == NovaInteractor.Source.LeftHand ? (rig.Left ?? rig.Right) : (rig.Right ?? rig.Left);
+                    else it = rig.Desktop;
+                }
+                if (it != null && it.isActiveAndEnabled && it.Held == null)
+                {
+                    yield return null;   // un frame para que el interactor termine su Start
+                    it.Grab(this);
+                    MissionHUD.Feedback("Llevas el módulo de repuesto en la mano.", MissionHUD.Tone.Info, 2.5f);
+                    yield break;
+                }
+                yield return null;
+            }
         }
 
         private void OnDestroy()
@@ -117,6 +162,7 @@ namespace NovaCore
 
         public override void OnGrab(NovaInteractor interactor)
         {
+            CarryHand = interactor.source;
             SetCollidersEnabled(false);
             bool done = false;
             if (completeOnGrab && MissionGate.IsCurrent(grabAction))
@@ -144,6 +190,8 @@ namespace NovaCore
         {
             if (Holder != null) Holder.ForceRelease();
             IsSocketed = true;
+            var zg = GetComponent<ZeroGBody>();
+            if (zg != null) zg.Freeze();
             transform.SetParent(socket, false);
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
@@ -152,8 +200,11 @@ namespace NovaCore
         public void ResetPickup()
         {
             if (Holder != null) Holder.ForceRelease();
+            if (onlyWhenCarried) { gameObject.SetActive(false); return; }
             if (!gameObject.activeSelf) gameObject.SetActive(true);
             IsSocketed = false;
+            var zgb = GetComponent<ZeroGBody>();
+            if (zgb != null) zgb.Freeze();
             transform.SetParent(_startParent, false);
             transform.localPosition = _startPos;
             transform.localRotation = _startRot;

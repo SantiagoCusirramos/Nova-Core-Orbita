@@ -6,6 +6,12 @@ using XRCommonUsages = UnityEngine.XR.CommonUsages;
 namespace NovaCore
 {
     /// <summary>
+    /// Movimiento del jugador con tres modos (campo 'mode'):
+    ///   FreeFly   → vuelo libre (vista exterior).
+    ///   Walk      → interiores: se camina como con gravedad, a altura fija.
+    ///   Thrusters → EVA: propulsores con inercia. Teclado: WASD + Espacio/Ctrl, X = estabilizar.
+    ///               VR: stick izq. empuja, A sube, B baja, click stick izq. = estabilizar.
+    ///
     /// Movimiento libre estilo "gravedad cero". Funciona en escritorio (teclado + ratón)
     /// y en VR (thumbsticks Meta Quest).
     ///
@@ -30,6 +36,34 @@ namespace NovaCore
     /// </summary>
     public class OrbitFreeFly : MonoBehaviour
     {
+        public enum MoveMode
+        {
+            /// <summary>Vuelo libre (vista exterior 01_Orbit).</summary>
+            FreeFly,
+            /// <summary>Interior con gravedad simulada: caminar a altura fija, sin subir/bajar.</summary>
+            Walk,
+            /// <summary>Exterior (EVA): mochila de propulsores con inercia, como el SAFER de la NASA.</summary>
+            Thrusters
+        }
+
+        [Header("Modo de movimiento")]
+        public MoveMode mode = MoveMode.FreeFly;
+
+        [Header("Propulsores (solo modo Thrusters)")]
+        [Tooltip("Aceleración de los propulsores en m/s²")]
+        public float thrustAcceleration = 0.9f;
+        [Tooltip("Velocidad máxima en m/s")]
+        public float maxThrustSpeed = 2.5f;
+        [Tooltip("Freno automático suave (0 = inercia pura, como en el espacio)")]
+        public float passiveDamping = 0.15f;
+        [Tooltip("Fuerza del botón ESTABILIZAR (frena del todo)")]
+        public float stabilizeDamping = 2.5f;
+
+        /// <summary>True mientras algún propulsor está encendido (para sonido/efectos).</summary>
+        public bool IsThrusting { get; private set; }
+        /// <summary>Velocidad actual en m/s (la muestra el HUD en EVA).</summary>
+        public float CurrentSpeed => _velocity.magnitude;
+
         [Header("Velocidad")]
         [Tooltip("Velocidad base en unidades/segundo (1 unidad = 1 metro)")]
         public float moveSpeed = 25f;
@@ -73,6 +107,9 @@ namespace NovaCore
 
         // VR snap turn
         private bool _snapTurnReady = true;
+
+        // Botón ESTABILIZAR (X en teclado, click del stick izquierdo en VR) — solo Thrusters
+        private bool _stabilize;
 
         // ── ciclo de vida ────────────────────────────────────────────────────
         private void Awake()
@@ -169,10 +206,11 @@ namespace NovaCore
                 if (kb.sKey.isPressed || kb.downArrowKey.isPressed)   v  -= 1f;
                 if (kb.dKey.isPressed || kb.rightArrowKey.isPressed)  h  += 1f;
                 if (kb.aKey.isPressed || kb.leftArrowKey.isPressed)   h  -= 1f;
-                if (kb.eKey.isPressed || kb.pageUpKey.isPressed)      up += 1f;
-                if (kb.qKey.isPressed || kb.pageDownKey.isPressed)    up -= 1f;
+                if (kb.eKey.isPressed || kb.pageUpKey.isPressed || kb.spaceKey.isPressed)      up += 1f;
+                if (kb.qKey.isPressed || kb.pageDownKey.isPressed || kb.leftCtrlKey.isPressed) up -= 1f;
 
                 sprint = kb.leftShiftKey.isPressed || kb.rightShiftKey.isPressed;
+                _stabilize = kb.xKey.isPressed;
             }
 
             ApplyMovement(h, v, up, sprint);
@@ -232,14 +270,26 @@ namespace NovaCore
 
             float h = leftStick.x;
             float v = leftStick.y;
-
-            // Stick derecho Y → subir/bajar, solo si el gesto es claramente vertical
             float up = 0f;
-            if (Mathf.Abs(rightStick.y) > verticalDeadZone && Mathf.Abs(rightStick.y) > Mathf.Abs(rightStick.x))
-                up = rightStick.y;
+            bool sprint = false;
 
-            // Click del stick izquierdo → turbo (gatillos libres para interactuar)
-            bool sprint = NovaXR.Button(XRNode.LeftHand, XRCommonUsages.primary2DAxisClick);
+            if (mode == MoveMode.Thrusters)
+            {
+                // Botones propios del traje, separados de los de herramientas (grip/gatillo):
+                //   A = propulsor arriba, B = propulsor abajo, click stick izquierdo = ESTABILIZAR
+                if (NovaXR.Button(XRNode.RightHand, XRCommonUsages.primaryButton))   up += 1f;
+                if (NovaXR.Button(XRNode.RightHand, XRCommonUsages.secondaryButton)) up -= 1f;
+                _stabilize = NovaXR.Button(XRNode.LeftHand, XRCommonUsages.primary2DAxisClick);
+            }
+            else
+            {
+                // Stick derecho Y → subir/bajar, solo si el gesto es claramente vertical
+                if (Mathf.Abs(rightStick.y) > verticalDeadZone && Mathf.Abs(rightStick.y) > Mathf.Abs(rightStick.x))
+                    up = rightStick.y;
+
+                // Click del stick izquierdo → turbo (gatillos libres para interactuar)
+                sprint = NovaXR.Button(XRNode.LeftHand, XRCommonUsages.primary2DAxisClick);
+            }
 
             ApplyMovement(h, v, up, sprint);
         }
@@ -250,22 +300,42 @@ namespace NovaCore
 
         private void ApplyMovement(float h, float v, float up, bool sprint)
         {
-            float speed = moveSpeed * (sprint ? sprintMultiplier : 1f);
-
-            // Dirección relativa a la cámara (incluye el pitch para volar en diagonal)
             Transform cam = playerCamera != null ? playerCamera.transform : transform;
-            Vector3 wish  = cam.right   * h
-                          + cam.forward * v
-                          + Vector3.up  * up;   // subir/bajar siempre en world-up
 
-            Vector3 target = wish.magnitude > 0.001f
-                ? Vector3.ClampMagnitude(wish, 1f) * speed
-                : Vector3.zero;
+            if (mode == MoveMode.Thrusters)
+            {
+                ApplyThrusters(cam, h, v, up);
+            }
+            else
+            {
+                float speed = moveSpeed * (sprint ? sprintMultiplier : 1f);
+                Vector3 wish;
 
-            // Suavizado con Lerp
-            _velocity = smoothing > 0f
-                ? Vector3.Lerp(_velocity, target, Time.deltaTime * smoothing)
-                : target;
+                if (mode == MoveMode.Walk)
+                {
+                    // Caminar: solo en el plano horizontal (como con gravedad), sin subir ni bajar
+                    Vector3 fwd = Vector3.ProjectOnPlane(cam.forward, Vector3.up);
+                    if (fwd.sqrMagnitude < 0.0001f) fwd = Vector3.ProjectOnPlane(cam.up, Vector3.up);
+                    fwd.Normalize();
+                    Vector3 right = Vector3.Cross(Vector3.up, fwd);
+                    wish = right * h + fwd * v;
+                }
+                else
+                {
+                    // Vuelo libre: relativo a la cámara (incluye el pitch para volar en diagonal)
+                    wish = cam.right * h + cam.forward * v + Vector3.up * up;
+                }
+
+                Vector3 target = wish.magnitude > 0.001f
+                    ? Vector3.ClampMagnitude(wish, 1f) * speed
+                    : Vector3.zero;
+
+                _velocity = smoothing > 0f
+                    ? Vector3.Lerp(_velocity, target, Time.deltaTime * smoothing)
+                    : target;
+                if (mode == MoveMode.Walk) _velocity.y = 0f;
+                IsThrusting = false;
+            }
 
             Vector3 delta = _velocity * Time.deltaTime;
 
@@ -286,5 +356,23 @@ namespace NovaCore
                 transform.position += delta;
             }
         }
+
+        /// <summary>
+        /// Física de la mochila de propulsores: el stick acelera (no mueve directamente),
+        /// al soltar se sigue flotando con la misma velocidad y ESTABILIZAR frena.
+        /// </summary>
+        private void ApplyThrusters(Transform cam, float h, float v, float up)
+        {
+            Vector3 dir = cam.right * h + cam.forward * v + Vector3.up * up;
+            IsThrusting = dir.sqrMagnitude > 0.01f;
+            if (IsThrusting)
+                _velocity += Vector3.ClampMagnitude(dir, 1f) * thrustAcceleration * Time.deltaTime;
+
+            float damping = _stabilize ? stabilizeDamping : (IsThrusting ? 0f : passiveDamping);
+            if (damping > 0f) _velocity *= Mathf.Exp(-damping * Time.deltaTime);
+
+            _velocity = Vector3.ClampMagnitude(_velocity, maxThrustSpeed);
+        }
+
     }
 }

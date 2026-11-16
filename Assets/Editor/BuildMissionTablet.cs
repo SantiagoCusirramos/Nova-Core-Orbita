@@ -31,7 +31,9 @@ public static class BuildMissionTablet
             AssetDatabase.importPackageCompleted += _ => EditorApplication.Exit(0);
             AssetDatabase.importPackageFailed += (_, e) => { Debug.LogError(e); EditorApplication.Exit(1); };
         }
+#pragma warning disable 0618 // ImportPackage sigue funcionando; evita el aviso amarillo en consola
         AssetDatabase.ImportPackage(pkg, false);
+#pragma warning restore 0618
     }
 
     [MenuItem("Nova Core/Crear Tablet de Mision")]

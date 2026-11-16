@@ -65,8 +65,14 @@ public class MissionTabletUI : MonoBehaviour
     private void Bind()
     {
         if (manager != null) return;
-        manager = missionManager != null ? missionManager : MissionManager.Instance;
+        // Con escenas separadas el MissionManager persiste (DontDestroyOnLoad) y el de cada
+        // escena nueva se destruye: hay que usar siempre la instancia viva.
+        manager = MissionManager.Instance != null ? MissionManager.Instance : missionManager;
         if (manager == null) return;
+
+        // La telemetria tambien vive en el objeto persistente (el reloj no se reinicia al cambiar de modulo)
+        var persistentTelemetry = manager.GetComponent<StationTelemetry>();
+        if (persistentTelemetry != null) telemetry = persistentTelemetry;
 
         manager.OnMissionChanged += OnMissionChanged;
         manager.OnObjectiveChanged += OnObjectiveChanged;

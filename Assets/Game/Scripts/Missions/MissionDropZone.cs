@@ -20,6 +20,9 @@ namespace NovaCore
         [Tooltip("Punto exacto donde queda la pieza. Vacío = este objeto.")]
         public Transform socket;
 
+        [Tooltip("Al encajar, la pieza se oculta (otro objeto de la escena la muestra instalada)")]
+        public bool hideOnAccept = false;
+
         [Header("Misión")]
         public MissionAction action = MissionAction.EnergyModuleLoadedIntoHatch;
 
@@ -51,7 +54,10 @@ namespace NovaCore
         {
             var m = MissionManager.Instance;
             if (m != null) m.OnMissionReset += ResetZone;
-            if (ghost != null) ghost.SetActive(true);
+            // Al volver al módulo con la pieza ya entregada, la ranura sigue ocupada
+            bool done = MissionGate.IsDone(action);
+            if (ghost != null) ghost.SetActive(!done);
+            if (done) enabled = false;
         }
 
         private void OnDestroy()
@@ -83,11 +89,13 @@ namespace NovaCore
             Occupant = p;
             p.SnapInto(Socket);
             if (ghost != null) ghost.SetActive(false);
+            if (hideOnAccept) p.gameObject.SetActive(false);
             return true;
         }
 
         private void ResetZone()
         {
+            enabled = true;
             Occupant = null;
             if (ghost != null) ghost.SetActive(true);
         }

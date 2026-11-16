@@ -308,7 +308,12 @@ namespace NovaCore
             if (uiProgressFillRenderer != null)
             {
                 float overallProgress = GetOverallProgress();
-                uiProgressFillRenderer.transform.localScale = new Vector3(Mathf.Clamp01(overallProgress), 1f, 1f);
+                uiProgressFillRenderer.transform.localScale =
+                    new Vector3(
+                        Mathf.Max(0.01f, Mathf.Clamp01(overallProgress)),
+                        1f,
+                        1f
+                    );
                 if (propBlock != null)
                 {
                     Color fillCol = Color.Lerp(Color.red, Color.green, overallProgress);
