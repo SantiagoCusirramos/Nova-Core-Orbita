@@ -719,13 +719,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ece8bab3fdf21b94ea33c354bf6aef2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceStation5.PlayerSpawnBay
-  sectorName: Sector Delta - Observation Promenade
-  spawnPoint: {fileID: 171559418}
-  beaconLight: {fileID: 299203755}
-  holographicRing: {fileID: 954740642}
-  arrivalParticles: {fileID: 0}
-  pulseSpeed: 2.5
-  rotationSpeed: 20
 --- !u!43 &5182263
 Mesh:
   m_ObjectHideFlags: 0
@@ -1442,6 +1435,74 @@ Mesh:
       - serializedVersion: 1
         m_IndexStart: 0
         m_IndexCount: 0
+--- !u!1001 &10609277
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5760797088432091682, guid: 9b0ed85a6252f2643a47eac57b7b2d4e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -16.78116
+      objectReference: {fileID: 0}
+    - target: {fileID: 5760797088432091682, guid: 9b0ed85a6252f2643a47eac57b7b2d4e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -15
+      objectReference: {fileID: 0}
+    - target: {fileID: 5760797088432091682, guid: 9b0ed85a6252f2643a47eac57b7b2d4e, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.98857
+      objectReference: {fileID: 0}
+    - target: {fileID: 5760797088432091682, guid: 9b0ed85a6252f2643a47eac57b7b2d4e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5760797088432091682, guid: 9b0ed85a6252f2643a47eac57b7b2d4e, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5760797088432091682, guid: 9b0ed85a6252f2643a47eac57b7b2d4e, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5760797088432091682, guid: 9b0ed85a6252f2643a47eac57b7b2d4e, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5760797088432091682, guid: 9b0ed85a6252f2643a47eac57b7b2d4e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5760797088432091682, guid: 9b0ed85a6252f2643a47eac57b7b2d4e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5760797088432091682, guid: 9b0ed85a6252f2643a47eac57b7b2d4e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5886520356449211613, guid: 9b0ed85a6252f2643a47eac57b7b2d4e, type: 3}
+      propertyPath: m_Name
+      value: CoreActionBridge_Test
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 9b0ed85a6252f2643a47eac57b7b2d4e, type: 3}
+--- !u!114 &10609278 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6235723334944980837, guid: 9b0ed85a6252f2643a47eac57b7b2d4e, type: 3}
+  m_PrefabInstance: {fileID: 10609277}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4232726643a3d764582128cf82cb2d1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MissionActionBridge
 --- !u!1 &12541386
 GameObject:
   m_ObjectHideFlags: 0
@@ -5749,20 +5810,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5efe4d22114f2d848996da8721cb2580, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceStation5.SpaceStationPlayerController
-  walkSpeed: 5
-  sprintSpeed: 9
-  jumpHeight: 1.3
-  gravity: -15
-  mouseSensitivity: 0.15
-  lookUpLimit: 85
-  lookDownLimit: -85
-  enableHeadBob: 1
-  bobFrequency: 8
-  bobHorizontalAmplitude: 0.04
-  bobVerticalAmplitude: 0.05
-  spawnPosition: {x: 0, y: 1.2, z: 6}
-  playerCamera: {fileID: 877444775}
-  flashlight: {fileID: 516503733}
 --- !u!143 &76086821
 CharacterController:
   m_ObjectHideFlags: 0
@@ -8260,13 +8307,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ece8bab3fdf21b94ea33c354bf6aef2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceStation5.PlayerSpawnBay
-  sectorName: Sector Transit - North Transit Pod Dock
-  spawnPoint: {fileID: 1332408794}
-  beaconLight: {fileID: 1230585903}
-  holographicRing: {fileID: 214986746}
-  arrivalParticles: {fileID: 0}
-  pulseSpeed: 2.5
-  rotationSpeed: 20
 --- !u!1 &112264424
 GameObject:
   m_ObjectHideFlags: 0
@@ -11064,13 +11104,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ece8bab3fdf21b94ea33c354bf6aef2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceStation5.PlayerSpawnBay
-  sectorName: Sector Alpha - Crew Habitation
-  spawnPoint: {fileID: 1188821530}
-  beaconLight: {fileID: 508835309}
-  holographicRing: {fileID: 125047814}
-  arrivalParticles: {fileID: 0}
-  pulseSpeed: 2.5
-  rotationSpeed: 20
 --- !u!1 &148503734
 GameObject:
   m_ObjectHideFlags: 0
@@ -12046,12 +12079,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c59f4b42d0628504889604c743f04666, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceStation5.AnimatedSpaceEnvironment
-  rotationSpeed: {x: 0.001, y: 0.003, z: 0.0008}
-  uvDriftSpeed: {x: 0, y: 0}
-  enablePulsing: 0
-  pulseFrequency: 0.35
-  minIntensity: 0.9
-  maxIntensity: 1.25
 --- !u!23 &157424643
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -12121,6 +12148,7 @@ GameObject:
   - component: {fileID: 158248595}
   - component: {fileID: 158248594}
   - component: {fileID: 158248593}
+  - component: {fileID: 158248596}
   m_Layer: 0
   m_Name: NavigationBeacon_3
   m_TagString: Untagged
@@ -12265,6 +12293,35 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 158248591}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &158248596
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 158248591}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!43 &158697463
 Mesh:
   m_ObjectHideFlags: 0
@@ -20196,6 +20253,7 @@ GameObject:
   m_Component:
   - component: {fileID: 299203754}
   - component: {fileID: 299203755}
+  - component: {fileID: 299203756}
   m_Layer: 0
   m_Name: SpawnBeaconLight
   m_TagString: Untagged
@@ -20283,6 +20341,35 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &299203756
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 299203753}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &299695086
 GameObject:
   m_ObjectHideFlags: 0
@@ -22414,25 +22501,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f7cf3a6e61230449a69fab22bcdc7eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceStation5.BlackHoleController
-  accretionDiskRoot: {fileID: 182630659}
-  eventHorizon: {fileID: 870937816}
-  masterRotationSpeed: 1
-  ringSpeeds:
-  - 24
-  - 18.5
-  - 13
-  - 9.2
-  - 6.5
-  - 4.2
-  - -5.5
-  - 7.8
-  precessionSpeed: {x: 0.012, y: 0.025, z: 0.008}
-  enablePulsation: 1
-  pulseFrequency: 0.65
-  minIntensity: 0.85
-  maxIntensity: 1.35
-  accretionLight: {fileID: 1096004249}
-  baseLightIntensity: 4.5
 --- !u!1 &350745017
 GameObject:
   m_ObjectHideFlags: 0
@@ -26664,21 +26732,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4b5d5710d2c17b41a7917fcdbe480b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceStation5.CelestialOrbitController
-  stationSpinSpeed: 0.12
-  stationTransform: {fileID: 118051501}
-  earthSpinSpeed: 0.02
-  earthTransform: {fileID: 929066009}
-  cloudSpinSpeed: 0.035
-  cloudTransform: {fileID: 69288414}
-  moonOrbitSpeed: 0.014
-  moonSpinSpeed: 0.014
-  moonSystemTransform: {fileID: 1519661338}
-  moonBodyTransform: {fileID: 120280674}
-  solarOrbitSpeed: 0.005
-  sunLightTransform: {fileID: 65903699}
-  sunVisualTransform: {fileID: 1780856676}
-  blackHoleDriftSpeed: 0.004
-  blackHoleTransform: {fileID: 348614043}
 --- !u!1 &410202521
 GameObject:
   m_ObjectHideFlags: 0
@@ -27871,6 +27924,7 @@ GameObject:
   m_Component:
   - component: {fileID: 436322021}
   - component: {fileID: 436322022}
+  - component: {fileID: 436322023}
   m_Layer: 0
   m_Name: LabLight_Main
   m_TagString: Untagged
@@ -27958,6 +28012,35 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &436322023
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 436322020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &437204965
 GameObject:
   m_ObjectHideFlags: 0
@@ -35828,13 +35911,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 962426a300b22f7478b85dedd1231dc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceStation5.StationDoor
-  leftPanel: {fileID: 1127304568}
-  rightPanel: {fileID: 1687011351}
-  statusLight: {fileID: 0}
-  slideDistance: 2.6999998
-  openSpeed: 4.5
-  detectionRadius: 5.5
-  isOpen: 0
 --- !u!1 &564694195
 GameObject:
   m_ObjectHideFlags: 0
@@ -35881,13 +35957,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 962426a300b22f7478b85dedd1231dc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceStation5.StationDoor
-  leftPanel: {fileID: 555730924}
-  rightPanel: {fileID: 1867862355}
-  statusLight: {fileID: 0}
-  slideDistance: 2.6999998
-  openSpeed: 4.5
-  detectionRadius: 5.5
-  isOpen: 0
 --- !u!43 &566729657
 Mesh:
   m_ObjectHideFlags: 0
@@ -38416,6 +38485,7 @@ GameObject:
   - component: {fileID: 606997205}
   - component: {fileID: 606997204}
   - component: {fileID: 606997203}
+  - component: {fileID: 606997206}
   m_Layer: 0
   m_Name: ConnectorCeilingLight
   m_TagString: Untagged
@@ -38560,6 +38630,35 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 606997201}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &606997206
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 606997201}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!43 &607501318
 Mesh:
   m_ObjectHideFlags: 0
@@ -40630,6 +40729,7 @@ GameObject:
   - component: {fileID: 657319015}
   - component: {fileID: 657319014}
   - component: {fileID: 657319013}
+  - component: {fileID: 657319016}
   m_Layer: 0
   m_Name: CeilingStripLight
   m_TagString: Untagged
@@ -40774,6 +40874,35 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 657319011}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &657319016
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 657319011}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &657726038
 GameObject:
   m_ObjectHideFlags: 0
@@ -45434,6 +45563,7 @@ GameObject:
   - component: {fileID: 730866506}
   - component: {fileID: 730866505}
   - component: {fileID: 730866504}
+  - component: {fileID: 730866507}
   m_Layer: 0
   m_Name: CeilingStripLight
   m_TagString: Untagged
@@ -45578,6 +45708,35 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 730866502}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &730866507
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 730866502}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &732101478
 GameObject:
   m_ObjectHideFlags: 0
@@ -48335,13 +48494,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ece8bab3fdf21b94ea33c354bf6aef2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceStation5.PlayerSpawnBay
-  sectorName: Sector 00 - Command Center Central Hub
-  spawnPoint: {fileID: 779944970}
-  beaconLight: {fileID: 1149345465}
-  holographicRing: {fileID: 832293168}
-  arrivalParticles: {fileID: 0}
-  pulseSpeed: 2.5
-  rotationSpeed: 35
 --- !u!1 &763778921
 GameObject:
   m_ObjectHideFlags: 0
@@ -48355,6 +48507,7 @@ GameObject:
   - component: {fileID: 763778925}
   - component: {fileID: 763778924}
   - component: {fileID: 763778923}
+  - component: {fileID: 763778927}
   m_Layer: 0
   m_Name: HydroponicBioTank_1
   m_TagString: Untagged
@@ -48522,6 +48675,35 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 763778921}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &763778927
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 763778921}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!43 &771396942
 Mesh:
   m_ObjectHideFlags: 0
@@ -51232,6 +51414,7 @@ GameObject:
   - component: {fileID: 813022104}
   - component: {fileID: 813022103}
   - component: {fileID: 813022102}
+  - component: {fileID: 813022106}
   m_Layer: 0
   m_Name: HydroponicBioTank_0
   m_TagString: Untagged
@@ -51399,6 +51582,35 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 813022100}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &813022106
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 813022100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!43 &815345979
 Mesh:
   m_ObjectHideFlags: 0
@@ -60329,6 +60541,7 @@ GameObject:
   - component: {fileID: 957150757}
   - component: {fileID: 957150756}
   - component: {fileID: 957150755}
+  - component: {fileID: 957150759}
   m_Layer: 0
   m_Name: HydroponicBioTank_-1
   m_TagString: Untagged
@@ -60496,6 +60709,35 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 957150753}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &957150759
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957150753}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &962104631
 GameObject:
   m_ObjectHideFlags: 0
@@ -62688,6 +62930,7 @@ GameObject:
   m_Component:
   - component: {fileID: 994518658}
   - component: {fileID: 994518659}
+  - component: {fileID: 994518660}
   m_Layer: 0
   m_Name: ObsLoungeLight_Center
   m_TagString: Untagged
@@ -62775,6 +63018,35 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &994518660
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 994518657}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &994918899
 GameObject:
   m_ObjectHideFlags: 0
@@ -69601,6 +69873,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1104307612}
   - component: {fileID: 1104307613}
+  - component: {fileID: 1104307614}
   m_Layer: 0
   m_Name: ArchPointLight
   m_TagString: Untagged
@@ -69688,6 +69961,35 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &1104307614
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1104307611}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1109404030
 GameObject:
   m_ObjectHideFlags: 0
@@ -72271,6 +72573,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1144503690}
   - component: {fileID: 1144503691}
+  - component: {fileID: 1144503692}
   m_Layer: 0
   m_Name: ArchPointLight
   m_TagString: Untagged
@@ -72358,6 +72661,35 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &1144503692
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1144503689}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1146898875
 GameObject:
   m_ObjectHideFlags: 0
@@ -82227,6 +82559,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1270972715}
   - component: {fileID: 1270972716}
+  - component: {fileID: 1270972717}
   m_Layer: 0
   m_Name: ArchPointLight
   m_TagString: Untagged
@@ -82314,6 +82647,35 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &1270972717
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1270972714}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1271377872
 GameObject:
   m_ObjectHideFlags: 0
@@ -86915,6 +87277,7 @@ GameObject:
   - component: {fileID: 1346800602}
   - component: {fileID: 1346800601}
   - component: {fileID: 1346800600}
+  - component: {fileID: 1346800603}
   m_Layer: 0
   m_Name: CeilingStripLight
   m_TagString: Untagged
@@ -87059,6 +87422,35 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1346800598}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1346800603
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1346800598}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1353172946
 GameObject:
   m_ObjectHideFlags: 0
@@ -90236,6 +90628,52 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1409267834}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1411140318
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1411140320}
+  - component: {fileID: 1411140319}
+  m_Layer: 0
+  m_Name: CoreDebugTester
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1411140319
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1411140318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b315da6c8489a294fbf77cc0fdf35359, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MissionDebugTester
+  missionManager: {fileID: 0}
+  actionBridge: {fileID: 10609278}
+--- !u!4 &1411140320
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1411140318}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.96182, y: 3.54131, z: -0.23339}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1412701803
 GameObject:
   m_ObjectHideFlags: 0
@@ -100012,13 +100450,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 962426a300b22f7478b85dedd1231dc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceStation5.StationDoor
-  leftPanel: {fileID: 2098562082}
-  rightPanel: {fileID: 1824102127}
-  statusLight: {fileID: 0}
-  slideDistance: 2.6999998
-  openSpeed: 4.5
-  detectionRadius: 5.5
-  isOpen: 0
 --- !u!1 &1582760118
 GameObject:
   m_ObjectHideFlags: 0
@@ -103622,11 +104053,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61fce01253146234eaf6e50055c84cf2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceStation5.StationTransitPod
-  startPosition: {x: 0, y: 0.05, z: 40}
-  endPosition: {x: 0, y: 0.05, z: 475}
-  speed: 35
-  isMoving: 0
-  targetIsEnd: 1
 --- !u!43 &1658085665
 Mesh:
   m_ObjectHideFlags: 0
@@ -107034,6 +107460,7 @@ GameObject:
   - component: {fileID: 1729207101}
   - component: {fileID: 1729207100}
   - component: {fileID: 1729207099}
+  - component: {fileID: 1729207102}
   m_Layer: 0
   m_Name: ConnectorCeilingLight
   m_TagString: Untagged
@@ -107178,6 +107605,35 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1729207097}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1729207102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1729207097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1731617219
 GameObject:
   m_ObjectHideFlags: 0
@@ -108004,6 +108460,7 @@ GameObject:
   - component: {fileID: 1739382442}
   - component: {fileID: 1739382441}
   - component: {fileID: 1739382440}
+  - component: {fileID: 1739382443}
   m_Layer: 0
   m_Name: CeilingStripLight
   m_TagString: Untagged
@@ -108148,6 +108605,35 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1739382438}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1739382443
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1739382438}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!43 &1739733690
 Mesh:
   m_ObjectHideFlags: 0
@@ -115696,6 +116182,7 @@ GameObject:
   - component: {fileID: 1852112037}
   - component: {fileID: 1852112036}
   - component: {fileID: 1852112035}
+  - component: {fileID: 1852112038}
   m_Layer: 0
   m_Name: CeilingStripLight
   m_TagString: Untagged
@@ -115840,6 +116327,35 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1852112033}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1852112038
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1852112033}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1852522877
 GameObject:
   m_ObjectHideFlags: 0
@@ -116292,6 +116808,51 @@ Mesh:
       - serializedVersion: 1
         m_IndexStart: 0
         m_IndexCount: 0
+--- !u!1 &1857802320
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1857802322}
+  - component: {fileID: 1857802321}
+  m_Layer: 0
+  m_Name: CoreEventTester
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1857802321
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1857802320}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53d56bf227927d547b2c93e6e55121e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MissionEventTester
+  missionManager: {fileID: 2053992057}
+--- !u!4 &1857802322
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1857802320}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -16.78116, y: -15, z: 0.98857}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1858153750
 GameObject:
   m_ObjectHideFlags: 0
@@ -120844,6 +121405,7 @@ GameObject:
   - component: {fileID: 1943657438}
   - component: {fileID: 1943657437}
   - component: {fileID: 1943657436}
+  - component: {fileID: 1943657439}
   m_Layer: 0
   m_Name: CeilingStripLight
   m_TagString: Untagged
@@ -120988,6 +121550,35 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1943657434}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1943657439
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1943657434}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1947120523
 GameObject:
   m_ObjectHideFlags: 0
@@ -128681,6 +129272,7 @@ GameObject:
   - component: {fileID: 2043396632}
   - component: {fileID: 2043396631}
   - component: {fileID: 2043396630}
+  - component: {fileID: 2043396633}
   m_Layer: 0
   m_Name: NavigationBeacon_0
   m_TagString: Untagged
@@ -128825,6 +129417,35 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2043396628}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &2043396633
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2043396628}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &2044183046
 GameObject:
   m_ObjectHideFlags: 0
@@ -130110,13 +130731,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 962426a300b22f7478b85dedd1231dc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpaceStation5.StationDoor
-  leftPanel: {fileID: 2093819857}
-  rightPanel: {fileID: 784196807}
-  statusLight: {fileID: 0}
-  slideDistance: 2.6999998
-  openSpeed: 4.5
-  detectionRadius: 5.5
-  isOpen: 0
 --- !u!43 &2057427063
 Mesh:
   m_ObjectHideFlags: 0
@@ -135370,6 +135984,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2119647403}
   - component: {fileID: 2119647404}
+  - component: {fileID: 2119647405}
   m_Layer: 0
   m_Name: ArchPointLight
   m_TagString: Untagged
@@ -135457,6 +136072,35 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &2119647405
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2119647402}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &2122021692
 GameObject:
   m_ObjectHideFlags: 0
@@ -136478,3 +137122,6 @@ SceneRoots:
   m_Roots:
   - {fileID: 118051501}
   - {fileID: 2053992058}
+  - {fileID: 1411140320}
+  - {fileID: 10609277}
+  - {fileID: 1857802322}

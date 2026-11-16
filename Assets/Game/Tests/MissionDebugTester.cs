@@ -5,6 +5,9 @@ public class MissionDebugTester : MonoBehaviour
     [Header("Sistema de misiones")]
     [SerializeField]
     private MissionManager missionManager;
+    [Header("Prueba de integracion")]
+    [SerializeField]
+    private MissionActionBridge actionBridge;
 
     // Verificar que podemos realizar las pruebas
     private bool CanTest()
@@ -147,6 +150,49 @@ public class MissionDebugTester : MonoBehaviour
         missionManager.ResetMission();
 
         Debug.Log("Secuencia reiniciada.");
+        ShowProgress();
+    }
+
+    // PRUEBA 6: Comunicación de MissionActionBridge con Core
+    [ContextMenu("Pruebas/6. Probar MissionActionBridge")]
+    private void TestActionBridge()
+    {
+        if (!CanTest()) return;
+
+        if (actionBridge == null)
+        {
+            Debug.LogError(
+                "No hay MissionActionBridge asignado para la prueba."
+            );
+            return;
+        }
+
+        int previousMission = missionManager.CurrentMissionIndex;
+        int previousObjective = missionManager.CurrentObjectiveIndex;
+        MissionState previousState = missionManager.CurrentState;
+
+        bool accepted = actionBridge.TryExecuteAction();
+
+        bool progressed =
+            missionManager.CurrentMissionIndex != previousMission ||
+            missionManager.CurrentObjectiveIndex != previousObjective ||
+            missionManager.CurrentState != previousState;
+
+        if (accepted && progressed)
+        {
+            Debug.Log(
+                "PRUEBA APROBADA: MissionActionBridge " +
+                "comunico correctamente con Core."
+            );
+        }
+        else
+        {
+            Debug.LogError(
+                "PRUEBA FALLIDA: MissionActionBridge " +
+                "no completo el objetivo esperado."
+            );
+        }
+
         ShowProgress();
     }
 }
