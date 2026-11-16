@@ -21,6 +21,8 @@ namespace NovaCore
         private float _hold;
         private bool _loading;
 
+        public override bool AllowPoke => true;   // se puede pulsar tocándolo con el dedo
+
         public override string GetPrompt() => prompt + " (mantener)";
 
         public override void OnUsePressed(NovaInteractor interactor) { _hold = 0f; }

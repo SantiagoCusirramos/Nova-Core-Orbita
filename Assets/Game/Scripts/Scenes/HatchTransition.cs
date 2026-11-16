@@ -49,6 +49,11 @@ namespace NovaCore
             }
             if (!_armed) return;
 
+            // Escotilla de salida del entrenamiento: al cruzarla se ve el video de introducción
+            // (aunque se haya saltado el tutorial). El propio video lleva luego al Nodo.
+            var intro = IntroVideoPlayer.Instance;
+            if (intro != null && intro.Pending) return;
+
             if (!ConditionMet || (gate != null && !gate.IsOpen))
             {
                 if (Time.unscaledTime >= _nextWarn)
@@ -62,6 +67,11 @@ namespace NovaCore
             }
 
             _armed = false;
+            if (intro != null && !intro.Done && intro.loadSceneAfter == targetScene)
+            {
+                intro.Play();
+                return;
+            }
             MissionHUD.Feedback("Pasando a " + destinationName + "...", MissionHUD.Tone.Info, 1.5f);
             SceneTransit.Go(targetScene, targetSpawnId);
         }

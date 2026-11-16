@@ -43,6 +43,17 @@ namespace NovaCore
         {
             _lastXR = NovaXR.IsActive;
             RefreshScreens();
+            // El video de introducción se ve al TERMINAR el entrenamiento (ver paso 5)
+            BeginNarrative();
+        }
+
+        private bool _started;
+        private bool _introRequested;
+
+        private void BeginNarrative()
+        {
+            if (_started) return;
+            _started = true;
             // Inicio narrativo (documento 2.2): despertar, alarma y aviso del Centro de Control
             PlayAlarm();
             MissionHUD.Feedback("Despiertas en la zona de descanso. Suena una alarma.\nCENTRO DE CONTROL: anomalía en la distribución eléctrica. " +
@@ -72,7 +83,23 @@ namespace NovaCore
         private void Update()
         {
             if (_lastXR != NovaXR.IsActive) { _lastXR = NovaXR.IsActive; RefreshScreens(); }
-            if (steps == null || _current >= steps.Length) return;
+#if UNITY_EDITOR
+            // Atajo de prueba SOLO en el editor: F8 abre la escotilla de salida (para probar el video)
+            var kb = UnityEngine.InputSystem.Keyboard.current;
+            if (kb != null && kb.f8Key.wasPressedThisFrame && exitHatch != null) exitHatch.ForceOpen();
+            // F9: lleva al jugador dentro del túnel de la escotilla (como si la cruzara)
+            if (kb != null && kb.f9Key.wasPressedThisFrame && exitHatch != null && Camera.main != null)
+            {
+                var root = Camera.main.transform.root;
+                var cc = root.GetComponent<CharacterController>();
+                if (cc != null) cc.enabled = false;
+                Vector3 d = exitHatch.transform.position - Camera.main.transform.position;
+                d.y = 0f;
+                root.position += d + exitHatch.transform.forward * 0.35f;   // forward de la escotilla apunta a la sala
+                if (cc != null) { Physics.SyncTransforms(); cc.enabled = true; }
+            }
+#endif
+            if (!_started || steps == null || _current >= steps.Length) return;
 
             // Paso 1: llegar a la zona marcada
             var s = steps[_current];
@@ -100,10 +127,11 @@ namespace NovaCore
             }
 
             // Paso 5: escotilla abierta → al llegar al Nodo empezará la misión sola
-            if (exitHatch != null && exitHatch.IsOpen)
+            if (exitHatch != null && exitHatch.IsOpen && !_introRequested)
             {
+                _introRequested = true;
                 Complete(steps.Length - 1);
-                GameIntroManager.PendingAutoStart = true;
+                // El video de introducción sale al CRUZAR la escotilla (HatchTransition)
             }
         }
 
@@ -122,7 +150,7 @@ namespace NovaCore
             }
             else
             {
-                MissionHUD.Feedback("Entrenamiento completo. Entra por la escotilla al Nodo: empieza la misión.", MissionHUD.Tone.Success, 6f);
+                MissionHUD.Feedback("Entrenamiento completo. Cruza la escotilla: mensaje entrante del Centro de Control...", MissionHUD.Tone.Success, 5f);
             }
         }
 

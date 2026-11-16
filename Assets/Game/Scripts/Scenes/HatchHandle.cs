@@ -27,6 +27,8 @@ namespace NovaCore
         private bool _opening;
         private AudioSource _audio;
 
+        public override bool AllowPoke => true;   // se puede pulsar tocándolo con el dedo
+
         public override string GetPrompt()
         {
             if (IsOpen) return "";
@@ -54,6 +56,13 @@ namespace NovaCore
         }
 
         public override void OnUseReleased(NovaInteractor interactor) { _hold = 0f; }
+
+        /// <summary>Abre la escotilla sin interacción (atajos de prueba del editor).</summary>
+        public void ForceOpen()
+        {
+            if (IsOpen || _opening) return;
+            StartCoroutine(Open(null));
+        }
 
         private IEnumerator Open(NovaInteractor interactor)
         {

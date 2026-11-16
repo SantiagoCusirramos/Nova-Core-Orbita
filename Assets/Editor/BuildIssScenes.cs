@@ -48,6 +48,9 @@ public static class BuildIssScenes
     const string AstronautModel = "Assets/Game/Art/Characters/Astronaut.glb";
     const string MoonTexture    = "Assets/Game/Art/Exterior/T_Moon_Disc.png";
     const string TabletPrefab   = "Assets/Game/Prefabs/UI/MissionTablet.prefab";
+    const string IntroVideo     = "Assets/Game/Art/Video/Intro_UltimaLuz.mp4";
+    const string MusicClip      = "Assets/Game/Audio/Music/Ambient_Orbita.wav";
+    const string TutorialIconDir = "Assets/Game/Art/UI/Tutorial";
 
     // Dimensiones comunes (metros)
     const float H      = 2.4f;   // altura interior de módulo
@@ -60,7 +63,7 @@ public static class BuildIssScenes
                     mLight, mScreen, mRed, mGreen, mAmber, mCyan, mCable, mBag, mGlass, mSolar,
                     mEarth, mAlarm, mOru, mPlant, mPlantLight, mSuit, mVisor, mBlackPanel,
                     mParticleAdd, mParticleMist, mLaser, mMarker, mController, mFrame, mFade,
-                    mGlove, mGuide, mMoon, mGold;
+                    mGlove, mGuide, mMoon, mGold, mVideo;
     static Material mToolPGT, mToolHammer, mToolRatchet, mToolGrease;
 
     static System.Random rng = new System.Random(1);
@@ -144,6 +147,32 @@ public static class BuildIssScenes
             earth.maxTextureSize = 2048;
             earth.SaveAndReimport();
         }
+
+        // Paredes y suelo: mipmaps + filtrado anisótropo (sin esto se "pixelan" y hacen moiré a distancia)
+        foreach (var f in new[] { "T_Interior_Wall_Albedo.png", "T_Interior_Wall_Normal.png", "T_Interior_Floor_Albedo.png",
+                                  "T_Interior_Floor_Normal.png", "T_Tech_Screen_Emission.png", "T_Solar_Panel_Albedo.png" })
+        {
+            var ti = AssetImporter.GetAtPath(TexDir + "/" + f) as TextureImporter;
+            if (ti == null) continue;
+            if (ti.mipmapEnabled && ti.anisoLevel >= 8 && ti.filterMode == FilterMode.Trilinear && ti.wrapMode == TextureWrapMode.Repeat) continue;
+            ti.mipmapEnabled = true;
+            ti.anisoLevel = 8;
+            ti.filterMode = FilterMode.Trilinear;
+            ti.wrapMode = TextureWrapMode.Repeat;
+            ti.SaveAndReimport();
+        }
+
+        // Iconos de las pantallas del tutorial como Sprites
+        foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", new[] { TutorialIconDir }))
+        {
+            var ti = AssetImporter.GetAtPath(AssetDatabase.GUIDToAssetPath(guid)) as TextureImporter;
+            if (ti == null || (ti.textureType == TextureImporterType.Sprite && ti.alphaIsTransparency)) continue;
+            ti.textureType = TextureImporterType.Sprite;
+            ti.spriteImportMode = SpriteImportMode.Single;
+            ti.alphaIsTransparency = true;
+            ti.mipmapEnabled = true;
+            ti.SaveAndReimport();
+        }
     }
 
     static void SetNormalMap(string path)
@@ -191,6 +220,13 @@ public static class BuildIssScenes
         mController= Lit("M_ISS_Controller", new Color(0.12f, 0.12f, 0.14f), 0.6f, 0.2f);
         mGlove     = Lit("M_ISS_Glove",      new Color(0.93f, 0.93f, 0.90f), 0.25f, 0f);
         mGold      = Lit("M_ISS_PatchGold",  new Color(1f, 0.78f, 0.25f), 0.8f, 0.9f, null, null, Vector2.one, new Color(0.6f, 0.4f, 0.05f));
+        var unlit = Shader.Find("Universal Render Pipeline/Unlit");
+        if (unlit != null)
+        {
+            mVideo = LoadOrCreate("M_IntroVideo", unlit, MatDir);
+            mVideo.SetColor("_BaseColor", Color.white);
+            EditorUtility.SetDirty(mVideo);
+        }
         var sprite = Shader.Find("Sprites/Default");
         if (sprite != null)
         {
@@ -208,6 +244,14 @@ public static class BuildIssScenes
         mParticleAdd  = Particle("M_ISS_Particle_Sparks", new Color(1f, 0.75f, 0.35f, 1f), additive: true);
         mParticleMist = Particle("M_ISS_Particle_Mist",   new Color(0.9f, 0.95f, 1f, 0.5f), additive: false);
         mLaser        = Particle("M_ISS_Laser",           Color.white, additive: false);
+        var soft = SoftParticleTexture();
+        if (soft != null)
+            foreach (var pm in new[] { mParticleAdd, mParticleMist })
+            {
+                pm.SetTexture("_BaseMap", soft);
+                pm.mainTexture = soft;
+                EditorUtility.SetDirty(pm);
+            }
         mFade         = FadeMaterial("M_ISS_Fade");
 
         var pgtTex = AssetDatabase.LoadAssetAtPath<Texture2D>(ToolDir + "/Models/pgt1_1_d.png");
@@ -314,6 +358,30 @@ public static class BuildIssScenes
         m.renderQueue = 4500;
         EditorUtility.SetDirty(m);
         return m;
+    }
+
+    /// <summary>Textura de punto suave para chispas y niebla (sin ella cada partícula es un cuadrado).</summary>
+    static Texture2D SoftParticleTexture()
+    {
+        string path = TexDir + "/T_Particle_Soft.png";
+        var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+        if (existing != null) return existing;
+        const int n = 64;
+        var t = new Texture2D(n, n, TextureFormat.RGBA32, false);
+        for (int y = 0; y < n; y++)
+            for (int x = 0; x < n; x++)
+            {
+                float d = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(n * 0.5f, n * 0.5f)) / (n * 0.5f);
+                float a = Mathf.Clamp01(1f - d);
+                a = a * a * (3f - 2f * a);
+                t.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+            }
+        File.WriteAllBytes(path, t.EncodeToPNG());
+        Object.DestroyImmediate(t);
+        AssetDatabase.ImportAsset(path);
+        var ti = AssetImporter.GetAtPath(path) as TextureImporter;
+        if (ti != null) { ti.alphaIsTransparency = true; ti.wrapMode = TextureWrapMode.Clamp; ti.SaveAndReimport(); }
+        return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
     }
 
     static Material Particle(string name, Color color, bool additive)
@@ -539,6 +607,9 @@ public static class BuildIssScenes
         h.position = worldCenter;
         h.rotation = faceRot;
         float t = 0.08f, d = 0.10f;
+        // El marco invade 1 cm el hueco: si su cara interior coincide con el canto de la pared,
+        // las dos mallas se pisan y el borde parpadea (z-fighting).
+        opening -= new Vector2(0.02f, 0.02f);
         Box("L", h, new Vector3(-opening.x * 0.5f - t * 0.5f, 0f, 0f), new Vector3(t, opening.y + t * 2f, d), mFrame, false);
         Box("R", h, new Vector3( opening.x * 0.5f + t * 0.5f, 0f, 0f), new Vector3(t, opening.y + t * 2f, d), mFrame, false);
         Box("B", h, new Vector3(0f, -opening.y * 0.5f - t * 0.5f, 0f), new Vector3(opening.x, t, d), mFrame, false);
@@ -789,7 +860,9 @@ public static class BuildIssScenes
     {
         var c = new GameObject(name).transform;
         c.SetParent(parent, false);
-        c.position = pos;
+        // 4 cm más hacia la sala: si no, la parte trasera de la consola atravesaba los
+        // subpaneles y asas de los racks de la pared y esas mallas parpadeaban (z-fighting)
+        c.position = pos + facing.normalized * 0.04f;
         c.rotation = Quaternion.LookRotation(facing, Vector3.up);
         Box("Plate", c, Vector3.zero, new Vector3(size.x, size.y, 0.04f), mBlackPanel, true, true);
         Box("Bezel", c, new Vector3(0f, 0f, -0.012f), new Vector3(size.x + 0.04f, size.y + 0.04f, 0.03f), mMetal, false);
@@ -844,6 +917,36 @@ public static class BuildIssScenes
         Box("Handle", oru.transform, new Vector3(0f, 0.15f, 0f), new Vector3(0.22f, 0.025f, 0.03f), mMetal, false, false);
         NovaText.CreateFacing(oru.transform, "Tag", "ORU-PWR", new Vector3(0f, -0.02f, 0.115f), new Vector2(0.2f, 0.05f), 26, Color.black);
         return oru;
+    }
+
+    static void AddOruPhysics(GameObject oru)
+    {
+        oru.AddComponent<Rigidbody>();
+        var zg = oru.AddComponent<ZeroGBody>();
+        zg.mass = 6f;            // un ORU real pesa bastante más; 6 kg para que se sienta pesado pero manejable
+        zg.bounciness = 0.3f;
+        zg.startFrozen = true;
+    }
+
+    /// <summary>
+    /// Copia del módulo de repuesto en un módulo de paso: solo aparece (en tu mano) si lo
+    /// llevas. Así se puede llevar de Destiny a Zvezda pasando por el Nodo.
+    /// </summary>
+    static void OruProxy(Ctx c, Vector3 pos)
+    {
+        var oru = BuildOru(c.content, pos);
+        oru.name = "Módulo energético (llevado en la mano)";
+        AddOruPhysics(oru);
+        var p = oru.AddComponent<MissionPickup>();
+        p.itemId = "energy_module";
+        p.prompt = "Módulo energético de repuesto (ORU)";
+        p.completeOnGrab = false;
+        p.grabAction = MissionAction.EnergyModuleCollected;
+        p.lockUntilObjective = false;
+        p.carryAcrossScenes = true;
+        p.onlyWhenCarried = true;
+        p.deliveredAction = MissionAction.EnergyModuleLoadedIntoHatch;
+        p.holdOffset = new Vector3(0f, -0.04f, 0.18f);
     }
 
     static GameObject BuildSuit(Transform parent, Vector3 floorPos)
@@ -1275,11 +1378,29 @@ public static class BuildIssScenes
         col.size = new Vector3(0.12f, 0.14f, length);
         col.center = Vector3.zero;
 
+        // Gravedad cero: en su soporte queda fija; soltada lejos flota en línea recta y rebota
+        toolGO.AddComponent<Rigidbody>();
+        var zgb = toolGO.AddComponent<ZeroGBody>();
+        zgb.startFrozen = true;
+        zgb.mass = type == SpaceToolType.PistolGripTool ? 3.4f : type == SpaceToolType.Hammer ? 1.1f
+                 : type == SpaceToolType.Ratchet ? 0.8f : 1.6f;   // masas aproximadas de herramientas reales
+        zgb.bounciness = 0.35f;
+
         var tool = toolGO.AddComponent<SpaceTool>();
         tool.toolType = type;
         tool.prompt = SpaceTool.DisplayName(type);
         tool.dockPoint = dock;
         tool.desktopHoldEuler = new Vector3(5f, -8f, 0f);
+        // Agarre en VR medido sobre los modelos: el MANGO queda en el puño y la punta hacia
+        // delante (pistolas) o la cabeza hacia arriba (martillo y carraca, como se sujetan).
+        // Pose del mando OpenXR: +Z hacia delante desde el puño, mango del objeto hacia -Y.
+        switch (type)
+        {
+            case SpaceToolType.PistolGripTool: tool.vrHoldEuler = Vector3.zero;              tool.vrHoldPosition = new Vector3(0f, 0.0f, 0.075f);  break;
+            case SpaceToolType.GreaseGun:      tool.vrHoldEuler = Vector3.zero;              tool.vrHoldPosition = new Vector3(0f, 0.04f, -0.07f); break;
+            case SpaceToolType.Hammer:         tool.vrHoldEuler = new Vector3(90f, 0f, 0f);  tool.vrHoldPosition = new Vector3(0f, 0.095f, 0f);    break;
+            default:                           tool.vrHoldEuler = new Vector3(90f, 0f, 0f);  tool.vrHoldPosition = new Vector3(0f, 0.06f, 0f);     break;
+        }
         if (type == SpaceToolType.PistolGripTool || type == SpaceToolType.GreaseGun)
             tool.effectParticles = Sparks(toolGO.transform, new Vector3(0f, 0f, length * 0.5f),
                                           type == SpaceToolType.GreaseGun ? mParticleMist : mParticleAdd, false);
@@ -1351,7 +1472,9 @@ public static class BuildIssScenes
         RenderSettings.sun = null;
 
         if (sun) CreateSun();
-        if (earth) CreateEarth(new Vector3(0f, -2600f, 400f));
+        // Misma apariencia que antes pero 4 veces más cerca y más pequeña: así la cámara puede
+        // usar un plano lejano de 1500 m y las paredes no parpadean (z-fighting por precisión).
+        if (earth) CreateEarth(new Vector3(0f, -650f, 100f), 900f);
 
         c.root = new GameObject("ISS · " + name).transform;
         decorRoot = new GameObject("Decor").transform;
@@ -1377,13 +1500,13 @@ public static class BuildIssScenes
         RenderSettings.sun = sun;
     }
 
-    static void CreateEarth(Vector3 pos)
+    static void CreateEarth(Vector3 pos, float diameter = 3600f)
     {
         var earth = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         earth.name = "Tierra (fondo)";
         Object.DestroyImmediate(earth.GetComponent<Collider>());
         earth.transform.position = pos;
-        earth.transform.localScale = Vector3.one * 3600f;
+        earth.transform.localScale = Vector3.one * diameter;
         earth.transform.rotation = Quaternion.Euler(-20f, 70f, 10f);
         var er = earth.GetComponent<Renderer>();
         er.sharedMaterial = mEarth;
@@ -1424,6 +1547,14 @@ public static class BuildIssScenes
         var hudGO = new GameObject("Mission HUD");
         hudGO.transform.SetParent(sys.transform, false);
         hudGO.AddComponent<MissionHUD>().markerMaterial = mMarker;
+
+        var music = AssetDatabase.LoadAssetAtPath<AudioClip>(MusicClip);
+        if (music != null)
+        {
+            var mGO = new GameObject("Música de fondo");
+            mGO.AddComponent<BackgroundMusic>().clip = music;
+        }
+        else report.Add("AVISO: falta " + MusicClip + " (sin música).");
 
         var guideGO = new GameObject("Guía al objetivo");
         guideGO.transform.SetParent(sys.transform, false);
@@ -1522,8 +1653,8 @@ public static class BuildIssScenes
         camGO.transform.SetParent(player.transform, false);
         camGO.transform.localPosition = new Vector3(0f, 1.45f, 0f);
         var cam = camGO.AddComponent<Camera>();
-        cam.nearClipPlane = 0.03f;
-        cam.farClipPlane = 8000f;
+        cam.nearClipPlane = 0.05f;   // antes 0.03/8000: poca precisión de profundidad → parpadeos
+        cam.farClipPlane = 1500f;
         cam.fieldOfView = 75f;
         cam.clearFlags = CameraClearFlags.Skybox;
         camGO.AddComponent<AudioListener>();
@@ -1614,7 +1745,7 @@ public static class BuildIssScenes
 
         // Vestíbulo (túnel de 1 m) más allá del hueco
         var tunnelSize = (Mathf.Abs(n.x) > 0.5f) ? new Vector3(1.0f, 1.7f, 1.6f) : new Vector3(1.6f, 1.7f, 1.0f);
-        Vector3 tunnelC = hatchCenter + n * (0.5f + WallT);
+        Vector3 tunnelC = hatchCenter + n * (0.5f + WallT + 0.015f);
         Module(c.root, "Vestíbulo → " + destName, tunnelC, tunnelSize, new[] { FaceOf(-n) }, null, false);
 
         // Escotilla cerrada (decorativa) al fondo del túnel
@@ -1666,6 +1797,55 @@ public static class BuildIssScenes
         return new Spawn(arrivalId, arrive, -n);
     }
 
+    /// <summary>
+    /// Objeto suelto que flota en gravedad cero (deriva lenta y gira). Se puede agarrar y
+    /// lanzar; rebota contra paredes y racks.
+    /// </summary>
+    static GameObject Loose(Transform parent, string name, Vector3 pos, Vector3 size, Material mat, float mass,
+                            PrimitiveType shape = PrimitiveType.Cube)
+    {
+        var go = Prim(shape, name, parent, pos, size, mat, true, false, true,
+                      Quaternion.Euler(Rand(0f, 360f), Rand(0f, 360f), Rand(0f, 360f)));
+        go.AddComponent<Rigidbody>();
+        var zg = go.AddComponent<ZeroGBody>();
+        zg.mass = mass;
+        zg.startFrozen = false;
+        zg.initialVelocity = new Vector3(Rand(-0.06f, 0.06f), Rand(-0.03f, 0.03f), Rand(-0.06f, 0.06f));
+        zg.initialSpin = new Vector3(Rand(-0.4f, 0.4f), Rand(-0.4f, 0.4f), Rand(-0.4f, 0.4f));
+        zg.returnHomeDistance = 12f;
+        var g = go.AddComponent<ZeroGGrabbable>();
+        g.prompt = name + " (agarrar y lanzar)";
+        return go;
+    }
+
+    /// <summary>Palanca en una consola: se baja con la mano (o manteniendo clic).</summary>
+    static NovaLever Lever(Transform console, string name, Vector3 local, string prompt, bool mission, MissionAction action,
+                           MissionZone zone = null)
+    {
+        var root = new GameObject(name).transform;
+        root.SetParent(console, false);
+        root.localPosition = local;
+        Box("Base", root, new Vector3(0f, 0f, 0.025f), new Vector3(0.12f, 0.08f, 0.05f), mMetal, false, false);
+        var pivot = new GameObject("Pivote").transform;
+        pivot.SetParent(root, false);
+        pivot.localPosition = new Vector3(0f, 0f, 0.05f);
+        Rod("Brazo", pivot, new Vector3(0f, 0.13f, 0f), 0.012f, 0.26f, Vector3.up, mMetal, false, false);
+        var knob = Prim(PrimitiveType.Sphere, "Pomo", pivot, new Vector3(0f, 0.27f, 0f), Vector3.one * 0.07f, mRed, true, false);
+        var led = Box("Luz", root, new Vector3(0.1f, 0f, 0.03f), new Vector3(0.03f, 0.03f, 0.02f), mAmber, false, false);
+        var lever = root.gameObject.AddComponent<NovaLever>();
+        lever.pivot = pivot;
+        lever.upAngle = 10f;     // casi vertical
+        lever.downAngle = 100f;  // tirada hacia ti y abajo
+        lever.prompt = prompt;
+        lever.completeMissionAction = mission;
+        lever.action = action;
+        lever.requiredZone = zone;
+        lever.statusLight = led.GetComponent<Renderer>();
+        lever.highlightRenderers = new[] { knob.GetComponent<Renderer>() };
+        lever.maxDistance = 3f;
+        return lever;
+    }
+
     /// <summary>Última escotilla creada por Exit() (la usa el tutorial).</summary>
     static HatchHandle lastHatch;
 
@@ -1715,29 +1895,50 @@ public static class BuildIssScenes
         q.AddComponent<FaceCamera>();
     }
 
-    /// <summary>Astronauta (modelo de recursos/, convertido sin Draco) escalado a 'height' metros.</summary>
-    static GameObject AddAstronaut(Transform parent, string name, Vector3 pos, Quaternion rot, float height)
+    /// <summary>
+    /// Astronauta (modelo de recursos/, convertido sin Draco y ya en metros con los pies en 0).
+    /// 'feet' = posición de los pies. Se asegura de que quede DE PIE (si el importador lo deja
+    /// tumbado lo endereza) y lo escala para no superar 'height' de alto ni 'maxWidth' de ancho.
+    /// </summary>
+    static GameObject AddAstronaut(Transform parent, string name, Vector3 feet, Quaternion rot, float height, float maxWidth = 2f)
     {
         var asset = AssetDatabase.LoadAssetAtPath<GameObject>(AstronautModel);
         if (asset == null) { report.Add("AVISO: no se pudo cargar " + AstronautModel + "."); return null; }
-        var go = PrefabUtility.InstantiatePrefab(asset) as GameObject;
-        if (go == null) return null;
-        PrefabUtility.UnpackPrefabInstance(go, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
-        go.name = name;
+        var model = PrefabUtility.InstantiatePrefab(asset) as GameObject;
+        if (model == null) return null;
+        PrefabUtility.UnpackPrefabInstance(model, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+        foreach (var c in model.GetComponentsInChildren<Collider>(true)) Object.DestroyImmediate(c);
+
+        // Contenedor: el modelo se corrige dentro y el contenedor lleva posición/rotación finales
+        var go = new GameObject(name);
         go.transform.SetParent(parent, false);
-        go.transform.SetPositionAndRotation(pos, rot);
-        go.transform.localScale = Vector3.one;
-        foreach (var c in go.GetComponentsInChildren<Collider>(true)) Object.DestroyImmediate(c);
-        var rs = go.GetComponentsInChildren<Renderer>(true);
-        if (rs.Length > 0)
+        model.transform.SetParent(go.transform, false);
+        model.transform.localPosition = Vector3.zero;
+        model.transform.localRotation = Quaternion.identity;
+        model.transform.localScale = Vector3.one;
+
+        var rs = model.GetComponentsInChildren<Renderer>(true);
+        if (rs.Length == 0) { report.Add("AVISO: el modelo de astronauta no tiene mallas."); return go; }
+        System.Func<Bounds> bounds = () => { Bounds bb = rs[0].bounds; foreach (var r in rs) bb.Encapsulate(r.bounds); return bb; };
+
+        // De pie: en pose T el alto (Y) es la dimensión mayor o casi; la profundidad es la menor
+        Bounds b = bounds();
+        if (b.size.y < Mathf.Max(b.size.x, b.size.z) * 0.6f)
         {
-            Bounds b = rs[0].bounds;
-            foreach (var r in rs) b.Encapsulate(r.bounds);
-            if (b.size.y > 1e-4f) go.transform.localScale = Vector3.one * (height / b.size.y);
-            b = rs[0].bounds;
-            foreach (var r in rs) b.Encapsulate(r.bounds);
-            go.transform.position += pos - b.center;   // centrado en 'pos'
+            model.transform.localRotation = Quaternion.Euler(b.size.z > b.size.x ? -90f : 0f, 0f, b.size.z > b.size.x ? 0f : 90f);
+            b = bounds();
+            report.Add("Astronauta: el importador lo dejó tumbado; se enderezó automáticamente.");
         }
+
+        float k = Mathf.Min(height / Mathf.Max(1e-4f, b.size.y), maxWidth / Mathf.Max(1e-4f, Mathf.Max(b.size.x, b.size.z)));
+        model.transform.localScale = Vector3.one * k;
+        b = bounds();
+        // Pies en el origen del contenedor, centrado en X/Z
+        model.transform.position += new Vector3(-b.center.x, -b.min.y, -b.center.z);
+
+        go.transform.SetPositionAndRotation(feet, rot);
+        b = bounds();
+        report.Add(string.Format("Astronauta '{0}': {1:0.00} m de alto × {2:0.00} m de ancho.", name, b.size.y, Mathf.Max(b.size.x, b.size.z)));
         return go;
     }
 
@@ -1757,7 +1958,7 @@ public static class BuildIssScenes
     static readonly Vector3 TutC = new Vector3(0f, H * 0.5f, 0f), TutS = new Vector3(6f, H, 6f);
 
     /// <summary>Pantalla negra con texto (Canvas world-space: fondo Image + Text).</summary>
-    static (Image bg, Text body) TutorialScreen(Transform parent, string name, Vector3 pos, Vector3 facing, Vector2 size)
+    static (Image bg, Text body) TutorialScreen(Transform parent, string name, Vector3 pos, Vector3 facing, Vector2 size, string icon = null)
     {
         var holder = new GameObject(name).transform;
         holder.SetParent(parent, false);
@@ -1766,7 +1967,7 @@ public static class BuildIssScenes
         Box("Marco", holder, new Vector3(0f, 0f, -0.02f), new Vector3(size.x + 0.06f, size.y + 0.06f, 0.03f), mMetal, false, false);
 
         var t = NovaText.Create(holder, "Pantalla", "", new Vector3(0f, 0f, 0.002f), Quaternion.Euler(0f, 180f, 0f),
-                                size, 34, new Color(0.9f, 0.95f, 1f), TextAnchor.UpperLeft);
+                                size, 46, new Color(0.9f, 0.95f, 1f), TextAnchor.UpperLeft);
         var canvas = t.canvas.transform;
         var bgGO = new GameObject("Fondo", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
         bgGO.transform.SetParent(canvas, false);
@@ -1777,7 +1978,25 @@ public static class BuildIssScenes
         img.color = new Color(0.02f, 0.03f, 0.05f, 0.95f);
         img.raycastTarget = false;
         var trt = t.rectTransform;
-        trt.offsetMin = new Vector2(45f, 35f); trt.offsetMax = new Vector2(-45f, -35f);
+        float iconPx = 0f;
+        var sprite = string.IsNullOrEmpty(icon) ? null : AssetDatabase.LoadAssetAtPath<Sprite>(TutorialIconDir + "/" + icon + ".png");
+        if (sprite != null)
+        {
+            // Icono del mando con el botón resaltado (y las teclas equivalentes), a la izquierda
+            iconPx = size.y * 1000f - 70f;
+            var icGO = new GameObject("Icono", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            icGO.transform.SetParent(canvas, false);
+            var irt = icGO.GetComponent<RectTransform>();
+            irt.anchorMin = new Vector2(0f, 0.5f); irt.anchorMax = new Vector2(0f, 0.5f);
+            irt.pivot = new Vector2(0f, 0.5f);
+            irt.sizeDelta = new Vector2(iconPx, iconPx);
+            irt.anchoredPosition = new Vector2(35f, 0f);
+            var ii = icGO.GetComponent<Image>();
+            ii.sprite = sprite;
+            ii.preserveAspect = true;
+            ii.raycastTarget = false;
+        }
+        trt.offsetMin = new Vector2(45f + (iconPx > 0f ? iconPx + 35f : 0f), 35f); trt.offsetMax = new Vector2(-45f, -35f);
         return (img, t);
     }
 
@@ -1791,7 +2010,7 @@ public static class BuildIssScenes
         var tc = c.systems.gameObject.AddComponent<TutorialController>();
         tc.exitHatch = exitHatch;
         var steps = new List<TutorialController.Step>();
-        Vector2 sz = new Vector2(1.5f, 0.95f);
+        Vector2 sz = new Vector2(2.1f, 1.15f);   // pantallas grandes (feedback: aprovechar el espacio)
 
         // 1 · Moverse: llegar a la plataforma verde
         var pad = new GameObject("Plataforma · ven aquí").transform;
@@ -1799,7 +2018,7 @@ public static class BuildIssScenes
         pad.position = new Vector3(-1.8f, 0f, 1.6f);
         Prim(PrimitiveType.Cylinder, "Disco", pad, new Vector3(0f, 0.01f, 0f), new Vector3(1.1f, 0.01f, 1.1f), mGreen, false, false);
         Label(pad, "VEN AQUÍ", pad.position + Vector3.up * 0.9f, Vector3.right, new Vector2(0.8f, 0.12f), 60, new Color(0.2f, 1f, 0.45f));
-        var s1 = TutorialScreen(c.content, "Pantalla 1 · Moverse", new Vector3(-2.93f, 1.45f, 0.9f), Vector3.right, sz);
+        var s1 = TutorialScreen(c.content, "Pantalla 1 · Moverse", new Vector3(-2.93f, 1.5f, 1.3f), Vector3.right, sz, "T1_Moverse");
         steps.Add(new TutorialController.Step
         {
             title = "Moverse",
@@ -1811,10 +2030,14 @@ public static class BuildIssScenes
         // 2 · Agarrar: caja de práctica sobre un pedestal
         Box("Pedestal", c.content, new Vector3(-2.2f, 0.45f, -1.0f), new Vector3(0.5f, 0.9f, 0.5f), mRackDark, true);
         var box = Box("Caja de práctica", c.content, new Vector3(-2.2f, 1.03f, -1.0f), new Vector3(0.24f, 0.24f, 0.24f), mOru, true, false, true);
+        box.AddComponent<Rigidbody>();
+        var boxZg = box.AddComponent<ZeroGBody>();
+        boxZg.startFrozen = true;   // espera en el pedestal hasta que la agarres
+        boxZg.mass = 2f;
         var tg = box.AddComponent<TutorialGrabbable>();
         tg.stepIndex = 1;
         tg.prompt = "Caja de práctica";
-        var s2 = TutorialScreen(c.content, "Pantalla 2 · Agarrar", new Vector3(-2.93f, 1.45f, -1.0f), Vector3.right, sz);
+        var s2 = TutorialScreen(c.content, "Pantalla 2 · Agarrar", new Vector3(-2.93f, 1.5f, -1.25f), Vector3.right, sz, "T2_Agarrar");
         steps.Add(new TutorialController.Step
         {
             title = "Agarrar",
@@ -1824,7 +2047,7 @@ public static class BuildIssScenes
         });
 
         // 3 · Usar: botón de práctica (mantener gatillo)
-        var cons = Console(c.content, "Consola de práctica", new Vector3(2.93f, 1.25f, -1.0f), Vector3.left, new Vector2(0.6f, 0.6f), "PRÁCTICA");
+        var cons = Console(c.content, "Consola de práctica", new Vector3(2.93f, 1.25f, -2.05f), Vector3.left, new Vector2(0.6f, 0.6f), "PRÁCTICA");
         var btn = new GameObject("Botón de práctica").transform;
         btn.SetParent(cons, false);
         var cap = Prim(PrimitiveType.Cylinder, "Cap", btn, new Vector3(0f, -0.04f, 0.05f), new Vector3(0.16f, 0.02f, 0.16f), mCyan,
@@ -1835,7 +2058,13 @@ public static class BuildIssScenes
         tb.prompt = "Botón de práctica";
         tb.statusLight = led.GetComponent<Renderer>();
         tb.highlightRenderers = new[] { cap.GetComponent<Renderer>() };
-        var s3 = TutorialScreen(c.content, "Pantalla 3 · Usar", new Vector3(2.93f, 1.45f, 0.6f), Vector3.left, sz);
+        // Práctica libre: palanca y objetos para lanzar (gravedad cero)
+        var leverC = Console(c.content, "Consola palanca", new Vector3(2.93f, 1.25f, 1.0f), Vector3.left, new Vector2(0.5f, 0.6f), "PALANCA");
+        Lever(leverC, "Palanca de práctica", new Vector3(0f, -0.12f, 0f), "Palanca de práctica", false, MissionAction.RepairConfirmed);
+        Loose(c.content, "Pelota (lánzala)", new Vector3(-0.8f, 1.4f, 0.4f), Vector3.one * 0.12f, mAmber, 0.2f, PrimitiveType.Sphere);
+        Loose(c.content, "Pelota (lánzala) 2", new Vector3(0.6f, 1.2f, 1.0f), Vector3.one * 0.12f, mCyan, 0.2f, PrimitiveType.Sphere);
+        Loose(c.content, "Bolsa de práctica", new Vector3(0.2f, 1.7f, -1.2f), new Vector3(0.3f, 0.2f, 0.22f), mBag, 2f);
+        var s3 = TutorialScreen(c.content, "Pantalla 3 · Usar", new Vector3(2.93f, 1.5f, -0.35f), Vector3.left, new Vector2(1.95f, 1.15f), "T3_Usar");
         steps.Add(new TutorialController.Step
         {
             title = "Usar botones y herramientas",
@@ -1845,7 +2074,7 @@ public static class BuildIssScenes
         });
 
         // 4 · Guía y tablet
-        var s4 = TutorialScreen(c.content, "Pantalla 4 · Guía", new Vector3(0.9f, 1.45f, -2.93f), Vector3.forward, sz);
+        var s4 = TutorialScreen(c.content, "Pantalla 4 · Guía", new Vector3(1.2f, 1.5f, -2.93f), Vector3.forward, sz, "T4_Guia");
         steps.Add(new TutorialController.Step
         {
             title = "Camino y tablet",
@@ -1855,7 +2084,7 @@ public static class BuildIssScenes
         });
 
         // 5 · Escotilla (sale al Nodo y empieza la historia)
-        var s5 = TutorialScreen(c.content, "Pantalla 5 · Escotilla", new Vector3(-1.6f, 1.45f, 2.93f), Vector3.back, new Vector2(1.3f, 0.95f));
+        var s5 = TutorialScreen(c.content, "Pantalla 5 · Escotilla", new Vector3(-1.95f, 1.5f, 2.93f), Vector3.back, new Vector2(1.9f, 1.15f), "T5_Escotilla");
         steps.Add(new TutorialController.Step
         {
             title = "Abrir la escotilla",
@@ -1866,15 +2095,33 @@ public static class BuildIssScenes
         tc.steps = steps.ToArray();
 
         // Información (no es un paso): controles del exterior y práctica libre con el taladro
-        var info = TutorialScreen(c.content, "Pantalla · Exterior (EVA)", new Vector3(-1.0f, 1.45f, -2.93f), Vector3.forward, sz);
+        var info = TutorialScreen(c.content, "Pantalla · Exterior (EVA)", new Vector3(-1.2f, 1.5f, -2.93f), Vector3.forward, sz, "T6_EVA");
         info.body.text = "<b>FUERA DE LA ESTACIÓN (EVA)</b>\n\nVR: stick izq. empuja · A sube · B baja\nClic stick izq.: ESTABILIZAR (frenar)\n" +
                          "Teclado: WASD empuja · Espacio/Ctrl sube/baja · X estabiliza\n\nEn el espacio no hay rozamiento: si sueltas, sigues flotando.";
-        info.body.fontSize = 30;
-        BuildRepairStation(c.content, "Mesa de práctica · Taladro", new Vector3(2.88f, 1.25f, 1.9f), Vector3.left,
+        info.body.fontSize = 38;
+        BuildRepairStation(c.content, "Mesa de práctica · Taladro", new Vector3(2.88f, 1.25f, 1.95f), Vector3.left,
                            RepairStationType.PistolGrip_WelderAndDrill, SpaceToolType.PistolGripTool, "PRÁCTICA LIBRE · TALADRO", false, MissionAction.RepairConfirmed);
         BuildTool(c.content, SpaceToolType.PistolGripTool, new Vector3(2.8f, 0.85f, 2.6f), Vector3.left);
 
-        Label(decorRoot, "SALA DE ENTRENAMIENTO · NOVA CORE", new Vector3(0f, 2.15f, -2.93f), Vector3.forward, new Vector2(2.4f, 0.16f), 64, new Color(0.15f, 0.2f, 0.3f));
+        Label(decorRoot, "SALA DE ENTRENAMIENTO · NOVA CORE", new Vector3(0f, 2.25f, -2.93f), Vector3.forward, new Vector2(2.4f, 0.13f), 56, new Color(0.15f, 0.2f, 0.3f));
+
+        // Video de introducción al terminar el entrenamiento (con botón OMITIR INTRO)
+        var introClip = AssetDatabase.LoadAssetAtPath<UnityEngine.Video.VideoClip>(IntroVideo);
+        if (introClip != null)
+        {
+            var ivp = c.systems.gameObject.AddComponent<IntroVideoPlayer>();
+            ivp.clip = introClip;
+            ivp.screenMaterial = mVideo;
+            ivp.playOnStart = false;          // se ve al CRUZAR la escotilla del entrenamiento (lore)
+            ivp.loadSceneAfter = SNodo;       // al acabar u omitirlo, al Nodo: empieza la misión
+            var vp = new GameObject("Punto de vista del video").transform;
+            vp.SetParent(c.root, false);
+            vp.position = new Vector3(-0.6f, 0f, -0.3f);
+            vp.rotation = Quaternion.LookRotation(Vector3.right, Vector3.up);   // mira a la pared +X
+            ivp.viewPoint = vp;
+            ivp.distance = 2.4f;
+        }
+        else report.Add("AVISO: falta " + IntroVideo + " (sin video de introducción).");
 
         var lights = new GameObject("Lights").transform; lights.SetParent(c.root, false);
         PointLight(lights, "Light Tutorial A", new Vector3(0f, 2.1f, 0f), 7f, 1.3f, new Color(1f, 0.96f, 0.9f));
@@ -1924,6 +2171,9 @@ public static class BuildIssScenes
 
         Patch(c, "nodo", "Nodo 1", new Vector3(1.25f, 2.05f, -1.25f));
         c.systems.gameObject.AddComponent<GameIntroManager>();   // misión automática al venir del entrenamiento
+        OruProxy(c, new Vector3(0f, 1.2f, 0.5f));
+        Loose(c.content, "Bolsa de carga", new Vector3(0.7f, 1.6f, -0.6f), new Vector3(0.3f, 0.2f, 0.22f), mBag, 2.5f);
+        Loose(c.content, "Linterna", new Vector3(-0.6f, 1.3f, 0.5f), new Vector3(0.05f, 0.11f, 0.05f), mMetal, 0.4f, PrimitiveType.Cylinder);
         BuildPlayer(c, new[] { new Spawn("", new Vector3(0f, 0f, -0.4f), Vector3.forward), sDes, sZve, sQue, sCup }, true, 1.4f);
         FinishScene(c, 1);
     }
@@ -1945,15 +2195,17 @@ public static class BuildIssScenes
         // Repuesto energético: al cogerlo se guarda en la bolsa (se instala en Zvezda)
         Box("Soporte ORU", c.content, new Vector3(-6.5f, 1.0f, 0.93f), new Vector3(0.5f, 0.04f, 0.14f), mMetal, true);
         var oru = BuildOru(c.content, new Vector3(-6.5f, 1.16f, 0.82f));
+        AddOruPhysics(oru);
         var pickup = oru.AddComponent<MissionPickup>();
         pickup.itemId = "energy_module";
         pickup.prompt = "Módulo energético de repuesto (ORU)";
         pickup.completeOnGrab = true;
         pickup.grabAction = MissionAction.EnergyModuleCollected;
         pickup.lockUntilObjective = true;
-        pickup.stowOnGrab = true;
-        pickup.stowMessage = "Repuesto guardado en tu bolsa. Llévalo a Zvezda (por el Nodo).";
-        pickup.holdOffset = new Vector3(0f, 0f, 0.18f);
+        pickup.stowOnGrab = false;   // ahora se lleva EN LA MANO hasta Zvezda
+        pickup.carryAcrossScenes = true;
+        pickup.deliveredAction = MissionAction.EnergyModuleLoadedIntoHatch;
+        pickup.holdOffset = new Vector3(0f, -0.04f, 0.18f);
         Label(c.content, "REPUESTO · MÓDULO ENERGÉTICO (ORU)", new Vector3(-6.5f, 1.5f, 0.97f), Vector3.back, new Vector2(0.9f, 0.08f), 34, new Color(0.15f, 0.2f, 0.3f));
 
         // Taller de práctica: las otras dos mesas portadas de NASA-SPACE-APPS
@@ -1972,6 +2224,9 @@ public static class BuildIssScenes
         PointLight(lights, "Light Lab B", new Vector3(-8.0f, 2.0f, 0f), 6f, 1.2f, warm);
 
         Patch(c, "destiny", "Destiny", new Vector3(-9.55f, 0.35f, 0.65f));
+        Loose(c.content, "Cuaderno de experimentos", new Vector3(-3.2f, 1.5f, 0.2f), new Vector3(0.21f, 0.02f, 0.28f), mPanel, 0.3f);
+        Loose(c.content, "Bebida (bolsa)", new Vector3(-5.0f, 1.7f, -0.3f), new Vector3(0.09f, 0.14f, 0.03f), mCyan, 0.3f);
+        Loose(c.content, "Pelota de pruebas", new Vector3(-7.2f, 1.4f, 0.1f), Vector3.one * 0.1f, mAmber, 0.15f, PrimitiveType.Sphere);
         var def = sBack; def.id = "";
         BuildPlayer(c, new[] { def, sBack }, true, 1.4f);
         FinishScene(c, 2);
@@ -1999,8 +2254,25 @@ public static class BuildIssScenes
         inSlot.name = "Repuesto en la compuerta";
         inSlot.transform.localScale = Vector3.one * 0.85f;
         inSlot.SetActive(false);
-        Button(hatchC, "Btn Introducir Repuesto", new Vector3(0f, -0.2f, 0f), MissionButton.Mode.CompleteAction, MissionAction.EnergyModuleLoadedIntoHatch,
-               "Introducir el repuesto en la compuerta", "INTRODUCIR\nREPUESTO", mAmber);
+
+        // Ranura: suelta el módulo que traes en la mano delante de la compuerta
+        var slotGO = new GameObject("Ranura del módulo (soltar aquí)");
+        slotGO.transform.SetParent(hatchC, false);
+        slotGO.transform.localPosition = new Vector3(0f, 0.08f, 0.13f);
+        var ghost = BuildOru(slotGO.transform, slotGO.transform.position);
+        ghost.name = "Silueta";
+        foreach (var col in ghost.GetComponentsInChildren<Collider>()) Object.DestroyImmediate(col);
+        foreach (var r in ghost.GetComponentsInChildren<Renderer>()) r.sharedMaterial = mGlass;
+        foreach (var t in ghost.GetComponentsInChildren<Canvas>()) Object.DestroyImmediate(t.gameObject);
+        var drop = slotGO.AddComponent<MissionDropZone>();
+        drop.acceptsItemId = "energy_module";
+        drop.acceptRadius = 0.5f;
+        drop.socket = slotGO.transform;
+        drop.action = MissionAction.EnergyModuleLoadedIntoHatch;
+        drop.ghost = ghost;
+        drop.hideOnAccept = true;   // lo muestra 'Repuesto en la compuerta' (también al volver al módulo)
+        NovaText.CreateFacing(hatchC, "Instrucción", "ACERCA EL MÓDULO Y SUÉLTALO AQUÍ", new Vector3(0f, -0.28f, 0.03f),
+                              new Vector2(0.65f, 0.08f), 28, new Color(1f, 0.8f, 0.3f));
         var r12 = c.reactions.gameObject.AddComponent<MissionReaction>();
         r12.onAction = MissionAction.EnergyModuleLoadedIntoHatch;
         r12.enableObjects = new[] { inSlot };
@@ -2008,7 +2280,10 @@ public static class BuildIssScenes
 
         // Consola robótica + brazo en la bahía exterior (visible por la ventana)
         var arm = BuildRoboticBay(c.content);
-        var robC = Console(c.content, "Consola Robótica", new Vector3(10.45f, 1.15f, -0.95f), Vector3.forward, new Vector2(1.05f, 0.9f), "CONTROL ROBÓTICO");
+        // Consola de mando frente a la ventana de la bahía (mesa inclinada): miras al brazo mientras lo manejas
+        var robC = Console(c.content, "Consola Robótica", new Vector3(10.75f, 0.82f, 0f), Vector3.left, new Vector2(1.05f, 0.9f), "CONTROL ROBÓTICO");
+        robC.rotation = Quaternion.LookRotation(Vector3.left, Vector3.up) * Quaternion.Euler(-55f, 0f, 0f);
+        Box("Pedestal consola", c.content, new Vector3(10.95f, 0.35f, 0f), new Vector3(0.35f, 0.7f, 0.9f), mRackDark, true, true, true);
         Button(robC, "Btn Activar Consola", new Vector3(-0.36f, -0.05f, 0f), MissionButton.Mode.CompleteAction, MissionAction.RoboticConsoleActivated,
                "Activar consola robótica", "ACTIVAR\nCONSOLA", mCyan);
         Button(robC, "Btn Confirmar", new Vector3(0.36f, -0.05f, 0f), MissionButton.Mode.CompleteAction, MissionAction.RepairConfirmed,
@@ -2023,6 +2298,9 @@ public static class BuildIssScenes
         PointLight(lights, "Light Svc B", new Vector3(9.0f, 2.0f, 0f), 6f, 1.2f, warm);
 
         Patch(c, "zvezda", "Zvezda", new Vector3(3.3f, 2.0f, -0.8f));
+        OruProxy(c, new Vector3(4.5f, 1.2f, 0f));   // aparece en tu mano al llegar con el módulo
+        Loose(c.content, "Bolsa de comida", new Vector3(5.5f, 1.6f, 0.3f), new Vector3(0.25f, 0.15f, 0.2f), mBag, 1.5f);
+        Loose(c.content, "Llave suelta", new Vector3(7.5f, 1.2f, -0.4f), new Vector3(0.03f, 0.18f, 0.02f), mMetal, 0.25f);
         var def = sBack; def.id = "";
         BuildPlayer(c, new[] { def, sBack }, true, 1.4f);
         FinishScene(c, 2);
@@ -2090,8 +2368,8 @@ public static class BuildIssScenes
         var suitC = Console(c.content, "Armario Traje", new Vector3(-1.17f, 1.2f, 3.7f), Vector3.right, new Vector2(0.95f, 1.5f), "ARMARIO EVA");
         var suit = BuildSuit(c.content, new Vector3(-0.88f, 0.3f, 3.45f));
         // Traje en el armario: el modelo de astronauta de recursos/ (si carga) en lugar del procedural
-        var astroSuit = AddAstronaut(c.content, "Traje EMU (modelo)", new Vector3(-0.82f, 1.15f, 3.45f),
-                                     Quaternion.LookRotation(Vector3.right, Vector3.up), 1.65f);
+        var astroSuit = AddAstronaut(c.content, "Traje EMU (modelo)", new Vector3(-0.85f, 0.18f, 3.6f),
+                                     Quaternion.LookRotation(Vector3.right, Vector3.up), 1.6f, 1.45f);
         if (astroSuit != null) { Object.DestroyImmediate(suit); suit = astroSuit; }
         Button(suitC, "Btn Equipar Traje", new Vector3(-0.3f, -0.05f, 0f), MissionButton.Mode.CompleteAction, MissionAction.SuitEquipped,
                "Equiparse con el traje", "EQUIPAR\nTRAJE", mGreen, zone: lockZone);
@@ -2114,8 +2392,11 @@ public static class BuildIssScenes
                "Completar la preparación EVA", "PREPARACIÓN\nCOMPLETA", mGreen, zone: lockZone);
 
         var depC = Console(c.content, "Panel Despresurización", new Vector3(1.17f, 1.3f, 5.6f), Vector3.left, new Vector2(0.6f, 0.75f), "ESCLUSA · PRESIÓN");
-        Button(depC, "Btn Despresurizar", Vector3.zero, MissionButton.Mode.CompleteAction, MissionAction.AirlockDepressurized,
-               "Despresurizar la esclusa", "DESPRESURIZAR", mRed, hold: 3f, zone: lockZone, big: true);
+        // Palanca (feedback: interactuar directamente con palancas)
+        Lever(depC, "Palanca Despresurizar", new Vector3(0f, -0.12f, 0f), "Palanca DESPRESURIZAR", true,
+              MissionAction.AirlockDepressurized, lockZone);
+        NovaText.CreateFacing(depC, "Etiqueta palanca", "DESPRESURIZAR\n(baja la palanca)", new Vector3(0f, 0.2f, 0.03f),
+                              new Vector2(0.5f, 0.12f), 30, Color.white);
         var r7 = c.reactions.gameObject.AddComponent<MissionReaction>();
         r7.onAction = MissionAction.AirlockDepressurized;
         r7.message = "Esclusa despresurizada: escotilla exterior abierta.";
@@ -2135,6 +2416,8 @@ public static class BuildIssScenes
         PointLight(lights, "Light Airlock", new Vector3(0f, 2.0f, 4.2f), 6f, 1.1f, new Color(0.9f, 0.95f, 1f));
 
         Patch(c, "quest", "Quest", new Vector3(0.85f, 0.35f, 6.0f));
+        OruProxy(c, new Vector3(0f, 1.2f, 2.5f));
+        Loose(c.content, "Guante de repuesto", new Vector3(0.4f, 1.7f, 4.6f), new Vector3(0.12f, 0.18f, 0.06f), mGlove, 0.3f);
         var def = sNodo; def.id = "";
         BuildPlayer(c, new[] { def, sNodo, sEva }, true, 1.4f);
         FinishScene(c, 1);
@@ -2175,6 +2458,8 @@ public static class BuildIssScenes
 
         // Por defecto se aparece en el centro de la Cúpula mirando por la ventana
         Patch(c, "cupula", "Cúpula", new Vector3(-0.95f, 2.05f, -2.75f));
+        OruProxy(c, new Vector3(0f, 1.2f, -2.6f));
+        Loose(c.content, "Cámara de fotos", new Vector3(0.5f, 1.5f, -2.9f), new Vector3(0.14f, 0.09f, 0.08f), mBlackPanel, 1.2f);
         AddMoon(c.root, new Vector3(-700f, 950f, -3000f), 260f);
         var def = new Spawn("", new Vector3(0f, 0f, -3.1f), Vector3.back);
         BuildPlayer(c, new[] { def, sBack }, true, 1.3f);
@@ -2184,6 +2469,39 @@ public static class BuildIssScenes
     // ════════════════════════════════════════════════════════════════════════
     // 07 · EVA (exterior real: copia de 01_Orbit con la ISS a escala 1:1)
     // ════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Colisiones del modelo exterior de la ISS (para no atravesarlo): MeshCollider en cada
+    /// malla del modelo y CharacterController en el jugador. Devuelve cuántas mallas.
+    /// </summary>
+    static int AddIssColliders(GameObject player)
+    {
+        var anyPart = GameObject.Find("12 Quest Airlock") ?? GameObject.Find("02 Unity Node 1");
+        if (anyPart == null) { report.Add("AVISO: no se encontró el modelo de la ISS para ponerle colisiones."); return 0; }
+        Transform root = anyPart.transform.root;
+        int added = 0;
+        foreach (var mf in root.GetComponentsInChildren<MeshFilter>(true))
+        {
+            if (mf.sharedMesh == null || mf.GetComponent<Collider>() != null) continue;
+            var mc = mf.gameObject.AddComponent<MeshCollider>();
+            mc.sharedMesh = mf.sharedMesh;
+            added++;
+        }
+
+        if (player != null)
+        {
+            var cc = player.GetComponent<CharacterController>();
+            if (cc == null) cc = player.AddComponent<CharacterController>();
+            cc.radius = 0.3f;          // casco + mochila
+            cc.height = 0.7f;
+            cc.center = new Vector3(0f, 1.45f, 0f);   // OrbitFreeFly lo mueve a la cabeza cada frame
+            cc.skinWidth = 0.03f;
+            cc.stepOffset = 0f;
+            cc.slopeLimit = 90f;
+            cc.minMoveDistance = 0f;
+        }
+        return added;
+    }
 
     static Bounds? BoundsOf(string objectName)
     {
@@ -2291,6 +2609,9 @@ public static class BuildIssScenes
         }
         else report.Add("AVISO: 01_Orbit no tiene Player con tag 'Player'.");
 
+        // Colisiones con el exterior de la ISS
+        report.Add("EVA: colisiones en " + AddIssColliders(pl) + " mallas de la ISS.");
+
         // Puntos de llegada
         var bayGO = new GameObject("Spawn · desde Quest");
         bayGO.transform.SetParent(c.root, false);
@@ -2337,6 +2658,19 @@ public static class BuildIssScenes
         BuildTool(c.root, SpaceToolType.PistolGripTool, station + right * 0.75f - dir * 0.1f, -dir);
         Label(c.root, "SECCIÓN DAÑADA DEL PANEL", station + Vector3.up * 0.75f, -dir, new Vector2(1.6f, 0.18f), 90, new Color(1f, 0.5f, 0.35f));
 
+        // Chispas en el panel dañado (sustituyen a la luz parpadeante); paran al repararlo
+        var dmgRoot = new GameObject("Chispas panel dañado").transform;
+        dmgRoot.SetParent(c.root, false);
+        var dmg = dmgRoot.gameObject.AddComponent<DamageSparks>();
+        dmg.stopWhenDone = MissionAction.SolarPanelRepaired;
+        dmg.sparks = new[]
+        {
+            SparkBurst(dmgRoot, station + right * 0.5f + Vector3.up * 0.35f, -dir),
+            SparkBurst(dmgRoot, station - right * 0.6f + Vector3.up * 0.2f, -dir),
+            SparkBurst(dmgRoot, station + Vector3.up * 0.55f, -dir + Vector3.up * 0.3f),
+        };
+        foreach (var ps in dmg.sparks) { var mm = ps.main; mm.gravityModifier = 0f; }   // en el espacio no caen
+
         // Luz de trabajo
         var spot = new GameObject("Foco EVA");
         spot.transform.SetParent(c.root, false);
@@ -2347,10 +2681,10 @@ public static class BuildIssScenes
         spot.AddComponent<UniversalAdditionalLightData>();
 
         // Compañero de EVA flotando junto al panel, y la Luna al fondo
-        var buddy = AddAstronaut(c.root, "Astronauta compañero (EVA)", station - right * 2.2f - dir * 0.8f + Vector3.up * 0.4f,
+        var buddy = AddAstronaut(c.root, "Astronauta compañero (EVA)", station - right * 2.2f - dir * 0.8f - Vector3.up * 0.6f,
                                  Quaternion.LookRotation(right, Vector3.up), 1.8f);
         if (buddy != null)
-            Label(c.root, "CMDTE. RÍOS · APOYO EVA", buddy.transform.position + Vector3.up * 1.3f, -dir, new Vector2(1.4f, 0.14f), 70, new Color(0.75f, 0.95f, 1f));
+            Label(c.root, "CMDTE. RÍOS · APOYO EVA", buddy.transform.position + Vector3.up * 2.1f, -dir, new Vector2(1.4f, 0.14f), 70, new Color(0.75f, 0.95f, 1f));
         AddMoon(c.root, new Vector3(-1500f, 1800f, -5000f), 380f);
 
         EditorSceneManager.MarkSceneDirty(scene);
@@ -2386,6 +2720,7 @@ public static class BuildIssScenes
         }
 
         var root = new GameObject("Marcadores Módulos").transform;
+        report.Add("01_Orbit: colisiones en " + AddIssColliders(pl) + " mallas de la ISS.");
 
         // Astronauta flotando junto a la esclusa Quest y la Luna de fondo
         foreach (var n in new[] { "Astronauta (exterior)", "Luna (Apollo 11)" })
@@ -2395,7 +2730,7 @@ public static class BuildIssScenes
         }
         Bounds? qb = BoundsOf("12 Quest Airlock");
         if (qb.HasValue)
-            AddAstronaut(root, "Astronauta (exterior)", qb.Value.center + new Vector3(4f, 3f, 2f), Quaternion.Euler(10f, -120f, 15f), 1.8f);
+            AddAstronaut(root, "Astronauta (exterior)", qb.Value.center + new Vector3(4f, 2f, 2f), Quaternion.Euler(10f, -120f, 15f), 1.8f);
         AddMoon(root, new Vector3(-1500f, 1800f, -5000f), 380f);
         var modules = new[]
         {
@@ -2420,6 +2755,7 @@ public static class BuildIssScenes
             // Zona de clic generosa: a ~170 m una esfera de 3 m es difícil de apuntar
             var hit = mk.AddComponent<SphereCollider>();
             hit.radius = 9f;
+            hit.isTrigger = true;   // el láser lo detecta, pero el jugador no choca con él
             Rod("Línea", mk.transform, Vector3.down * ((b.Value.extents.y + 6f) * 0.5f), 0.08f, b.Value.extents.y + 6f, Vector3.up, mCyan);
 
             var bb = new GameObject("Cartel").transform;

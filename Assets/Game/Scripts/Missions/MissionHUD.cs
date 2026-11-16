@@ -145,6 +145,11 @@ namespace NovaCore
             if (_cam == null || !_cam.isActiveAndEnabled) { _cam = Camera.main; _snapNext = true; }
             if (_cam == null) return;
 
+            // Durante el video de introducción el panel no tapa la pantalla
+            bool intro = IntroVideoPlayer.IsPlaying;
+            if (_panel != null && _panel != transform && _panel.gameObject.activeSelf == intro) _panel.gameObject.SetActive(!intro);
+            if (intro) return;
+
             FollowView();
             UpdatePrompt();
             UpdateMarker();

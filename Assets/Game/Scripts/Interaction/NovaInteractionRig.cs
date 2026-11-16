@@ -80,6 +80,9 @@ namespace NovaCore
             it.rayLength = vrRayLength;
             it.laserMaterial = laserMaterial;
 
+            // Manos con colisión: empujan los objetos sueltos
+            NovaHandPhysics.Create(hand, it.fingertipOffset);
+
             if (createControllerVisuals && hand.childCount == 0)
             {
                 if (showHands) NovaHandVisual.Create(hand, src == NovaInteractor.Source.LeftHand, controllerMaterial);

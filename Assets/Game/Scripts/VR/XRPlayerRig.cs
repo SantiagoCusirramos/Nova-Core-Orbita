@@ -201,8 +201,11 @@ namespace NovaCore
             go.transform.localPosition = Vector3.zero;
             go.transform.localRotation = Quaternion.identity;
 
-            var driver = go.AddComponent<TrackedPoseDriver>();
-            SetDriverBindings(driver, posBinding, rotBinding, trackBinding);
+            // Las manos siguen al mando con NovaHandPose (lee el dispositivo XR cada frame y
+            // antes de renderizar). El TrackedPoseDriver dejaba la mano congelada cuando el
+            // runtime no informaba el tracking state del mando.
+            var pose = go.AddComponent<NovaCore.NovaHandPose>();
+            pose.node = handName.StartsWith("Left") ? XRNode.LeftHand : XRNode.RightHand;
 
             if (modelPrefab != null)
                 Instantiate(modelPrefab, go.transform, false).name = handName + " Visual";

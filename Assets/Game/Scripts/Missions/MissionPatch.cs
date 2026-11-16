@@ -33,6 +33,8 @@ namespace NovaCore
             transform.localPosition = _base + Vector3.up * Mathf.Sin(Time.time * 2f) * 0.02f;
         }
 
+        public override bool AllowPoke => true;   // se puede pulsar tocándolo con el dedo
+
         public override string GetPrompt() => "Recoger " + patchName;
 
         public override void OnUsePressed(NovaInteractor interactor)
