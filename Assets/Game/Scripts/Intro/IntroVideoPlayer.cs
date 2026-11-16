@@ -121,7 +121,7 @@ namespace NovaCore
             NovaText.Create(_screen.transform, "Texto omitir", ">> OMITIR INTRO",
                             new Vector3(screenWidth * 0.5f - 0.35f, -h * 0.5f - 0.17f, -0.03f), Quaternion.identity,
                             new Vector2(0.6f, 0.14f), 60, Color.white);
-            NovaText.Create(_screen.transform, "Ayuda omitir",
+            _skipText = NovaText.Create(_screen.transform, "Ayuda omitir",
                             NovaXR.IsActive ? "A / X: omitir" : "Espacio / Enter: omitir",
                             new Vector3(-screenWidth * 0.5f + 0.5f, -h * 0.5f - 0.17f, -0.03f), Quaternion.identity,
                             new Vector2(1.0f, 0.1f), 70, new Color(0.7f, 0.8f, 0.9f));
@@ -142,7 +142,11 @@ namespace NovaCore
             _vp.EnableAudioTrack(0, true);
             _vp.SetTargetAudioSource(0, audio);
             _vp.loopPointReached += _ => Finish();
-            _vp.errorReceived += (_, msg) => { Debug.LogWarning("[IntroVideoPlayer] " + msg); Finish(); };
+            // Con el visor (Link) el driver de audio cambia al arrancar XR y el reproductor puede
+            // avisar errores no graves: antes eso cerraba el video al instante. Ahora solo se registra;
+            // si de verdad no arranca, el tiempo de seguridad de Update lo cierra.
+            _vp.errorReceived += (_, msg) => Debug.LogWarning("[IntroVideoPlayer] Aviso del reproductor: " + msg);
+            _vp.skipOnDrop = true;
             _vp.Play();
 
             if (darkenRoom) Darken(true);
@@ -154,18 +158,37 @@ namespace NovaCore
         {
             if (!_playing) return;
 
-            bool skip = false;
-            var kb = Keyboard.current;
-            if (kb != null && (kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.escapeKey.wasPressedThisFrame)) skip = true;
-            if (NovaXR.Button(XRNode.RightHand, XRCommonUsages.primaryButton) || NovaXR.Button(XRNode.LeftHand, XRCommonUsages.primaryButton)) skip = true;
-            // Pequeña espera para no omitir con la misma pulsación que abrió el juego
-            if (skip && Time.unscaledTime - _startTime > 0.6f) Skip();
+            float t = Time.unscaledTime - _startTime;
 
-            // Seguridad: si el video no arranca (códec no soportado) no bloquear el juego
-            if (_vp != null && !_vp.isPlaying && Time.unscaledTime - _startTime > 8f && _vp.frame <= 0) Finish();
+            // Teclado: Espacio / Enter / Esc omiten al instante
+            var kb = Keyboard.current;
+            if (t > 1f && kb != null && (kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.escapeKey.wasPressedThisFrame))
+            { Skip(); return; }
+
+            // Visor: hay que MANTENER A o X un segundo. Antes bastaba con que el botón estuviera
+            // pulsado en cualquier frame, y en VR se saltaba solo (botón aún pulsado al cruzar, etc.)
+            bool vrHeld = NovaXR.Button(XRNode.RightHand, XRCommonUsages.primaryButton) ||
+                          NovaXR.Button(XRNode.LeftHand, XRCommonUsages.primaryButton);
+            if (!vrHeld) _vrReleased = true;                     // exige soltar primero
+            if (vrHeld && _vrReleased && t > 1.5f) _skipHold += Time.unscaledDeltaTime;
+            else _skipHold = 0f;
+            if (_skipText != null)
+                _skipText.text = _skipHold > 0f ? "Omitiendo... " + Mathf.RoundToInt(Mathf.Clamp01(_skipHold / SkipHoldSeconds) * 100f) + "%"
+                                                : (NovaXR.IsActive ? "Mantén A / X: omitir" : "Espacio / Enter: omitir");
+            if (_skipHold >= SkipHoldSeconds) { Skip(); return; }
+
+            // Seguridad: si el video no llega a mostrar ningún fotograma, no bloquear el juego
+            if (_vp != null && !_vp.isPlaying && t > 15f && _vp.frame <= 0) Finish();
         }
 
         public void Skip() => Finish();
+
+        private const float SkipHoldSeconds = 1f;
+        private float _skipHold;
+        private bool _vrReleased;
+        private UnityEngine.UI.Text _skipText;
+        /// <summary>Segundos desde que empezó el video (el botón de omitir ignora pulsaciones al principio).</summary>
+        public float Elapsed => _playing ? Time.unscaledTime - _startTime : 0f;
 
         /// <summary>Lleva al jugador al punto de vista (la cámara queda en él, mirando hacia su frente).</summary>
         private void MoveToViewPoint(Camera cam)
